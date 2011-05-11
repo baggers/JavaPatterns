@@ -10,12 +10,7 @@ public class MethodLimitCheck extends Check
     @Override
     public int[] getDefaultTokens()
     {
-        return new int[]{TokenTypes.CLASS_DEF, TokenTypes.INTERFACE_DEF};
-//		for (int i = 0; i < test.length; i++)
-//		{
-//			System.out.println("DefaultToken[" + i +"] = " + test[i]);
-//		}
-//		return test; 	
+        return new int[]{TokenTypes.CLASS_DEF, TokenTypes.INTERFACE_DEF};	
     }
 
     @Override

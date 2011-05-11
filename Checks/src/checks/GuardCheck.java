@@ -48,12 +48,12 @@ public class GuardCheck extends Check
 				// If the statement list contains an if we have a guard pattern present (?)
 				if (!list.branchContains(TokenTypes.LITERAL_IF))
 				{
-					System.out.println("\tExpected if statement NOT found.");
+					System.out.println("\tExpected if statement NOT found.\t FAIL");
 					log(list.getLineNo(), "Guard pattern not present in '" +methodName+ "' method.");
 				}
 				else
 				{
-					System.out.println("\tIf statement found.");
+					System.out.println("\tIf statement found.\t\t\t PASS");
 				}
 			}
 			else
@@ -65,7 +65,7 @@ public class GuardCheck extends Check
 		else
 		{
 			// TODO fix this message
-			System.out.println("Method " +methodName+ " is not to be checked. It is not " +mName+ " ."); 
+			System.out.println("\tMethod " +methodName+ " is not to be checked. It is not " +mName+ "."); 
 		}
 	}
 	
