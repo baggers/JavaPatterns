@@ -7,30 +7,24 @@ public class GuardCheck extends Check
 	private String mName;
 
 	/**
-	 * Return the tokens this check is interested in visiting
+	 * Return integer array of unique Token Types to visit
 	 */
 	@Override
 	public int[] getDefaultTokens()
 	{
-		System.out.println("getDefTokens: Guard check (method_def).");
-		int[] result = new int[]{TokenTypes.METHOD_DEF};
-		System.out.println("Number of token types: " + result.length); // 1 for method def
-		return result;
+		return new int[]{TokenTypes.METHOD_DEF};
 	}
 	
 	/**
-	 * Called for each default token
+	 * Visit each token identified by the default token type
 	 * 
-	 * For each method AST we want to see if it is a method that is required to be checked
-	 * as per the configuration file property methodName
+	 * For each method def AST
+	 * - check if the method is one specified to be checked by the config xml (methodName property)
+	 * - slist -> literal if (expr) -> { slist (expr/assignment) }
 	 * 
-	 * If the method is to be checked, it needs to match the guard pattern AST
-	 * Slist 	-> literal_if ( expr) { slist }
-	 * expr 	-> operator (ident, value)
-	 * 
-	 * TODO 
-	 * - establish if just checking for an 'if' statement is satisfactory or how to extend this...
-	 * - learn how to log information correctly 
+	 * TODO
+	 * - ensure that no further assignments are made to vars outside of the if statement
+	 * - ensure there is no 'else' component to the if statement
 	 */
 	@Override
 	public void visitToken(DetailAST ast)
@@ -40,7 +34,7 @@ public class GuardCheck extends Check
 		// Convert the identity to a readable method string
 		String methodName = s.substring(0, s.indexOf('['));
 		
-		System.out.println("Method: " +methodName);
+		System.out.println("Visiting method: " +methodName);
 		
 		// If the method name is the specified one to check - check it
 		if (this.mName.equals(methodName))
@@ -54,12 +48,12 @@ public class GuardCheck extends Check
 				// If the statement list contains an if we have a guard pattern present (?)
 				if (!list.branchContains(TokenTypes.LITERAL_IF))
 				{
-					System.out.println("\tExpected if statement NOT found in " +methodName);
+					System.out.println("\tExpected if statement NOT found.");
 					log(list.getLineNo(), "Guard pattern not present in '" +methodName+ "' method.");
 				}
 				else
 				{
-					System.out.println("\tIf statement found in " +methodName+ "method.");
+					System.out.println("\tIf statement found.");
 				}
 			}
 			else
@@ -71,19 +65,19 @@ public class GuardCheck extends Check
 		else
 		{
 			// TODO fix this message
-			System.out.println("Method named " +methodName+ "did not match the method we are looking for.");
+			System.out.println("Method " +methodName+ " is not to be checked. It is not " +mName+ " ."); 
 		}
 	}
 	
 	/**
 	 * Sets the method name property
-	 * @param mName the name of the method to perform the check upon in the source java file
+	 * @param mName the name of the method in the source Java file to perform the Guard pattern check
 	 */
 	public void setMethodName(String mName)
 	{
 		// Need to extend this idea to be able to have multiple methods
 		// given as this string then manipulate into a list/array of methods to check
-		System.out.println("Config value for method name " +mName);
+		System.out.println("Method(s) to be checked: " +mName);
 		this.mName = mName;
 	}
 
