@@ -2,6 +2,13 @@ package checks;
 
 import com.puppycrawl.tools.checkstyle.api.*;
 
+/**
+ * Guard Pattern Check for Checkstyle.
+ * 
+ * @author Alex Bagini
+ * @version 0.1
+ * 
+ */
 public class GuardCheck extends Check
 {
 	private String mName;
