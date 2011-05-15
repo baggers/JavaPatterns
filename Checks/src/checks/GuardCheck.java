@@ -35,32 +35,46 @@ public class GuardCheck extends Check
 	 */
 	@Override
 	public void visitToken(DetailAST ast)
-	{
+	{		
 		// Find the identity of the token being visited
 		String s = ast.findFirstToken(TokenTypes.IDENT).toString();
 		// Convert the identity to a readable method string
 		String methodName = s.substring(0, s.indexOf('['));
 		
-		System.out.println("Visiting method: " +methodName);
 		
 		// If the method name is the specified one to check - check it
 		if (this.mName.equals(methodName))
-		{	
+		{
+			System.out.println("Visiting method: " +methodName);
+			
 			// Check that the method contains the guard pattern
 			// First we look for a statement list
 			DetailAST list = ast.findFirstToken(TokenTypes.SLIST);
 			
 			if (list != null)
 			{
-				// If the statement list contains an if we have a guard pattern present (?)
+				/* Now need to check that the statement list complies with the guard pattern
+				 *  - check if statement present
+				 *  - check no else statement
+				 *  - check variable used in the check is not used elsewhere in the method (?)
+				 */
 				if (!list.branchContains(TokenTypes.LITERAL_IF))
 				{
-					System.out.println("\tExpected if statement NOT found.\t FAIL");
+					System.out.println("\tExpected if statement NOT found.\tFAIL");
 					log(list.getLineNo(), "Guard pattern not present in '" +methodName+ "' method.");
 				}
 				else
 				{
-					System.out.println("\tIf statement found.\t\t\t PASS");
+					// Check no else component
+					if (!list.findFirstToken(TokenTypes.LITERAL_IF).branchContains(TokenTypes.LITERAL_ELSE))
+					{
+						System.out.println("\tGuard pattern found.\t\t\tPASS");
+					}
+					else
+					{
+						// Else found which should not be present in guard pattern
+						log(list.getLineNo(), "Guard pattern incorrectly implemented in ''" +methodName+ "''. Else statement present.");
+					}
 				}
 			}
 			else
@@ -71,8 +85,7 @@ public class GuardCheck extends Check
 		}
 		else
 		{
-			// TODO fix this message
-			System.out.println("\tMethod " +methodName+ " is not to be checked. It is not " +mName+ "."); 
+			// TODO report not the method we are looking for (?) 
 		}
 	}
 	
@@ -84,7 +97,7 @@ public class GuardCheck extends Check
 	{
 		// Need to extend this idea to be able to have multiple methods
 		// given as this string then manipulate into a list/array of methods to check
-		System.out.println("Method(s) to be checked: " +mName);
+		System.out.println("Method to be checked: " +mName);
 		this.mName = mName;
 	}
 

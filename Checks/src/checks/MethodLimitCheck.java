@@ -21,7 +21,6 @@ public class MethodLimitCheck extends Check
         // count the number of direct children of the OBJBLOCK
         // that are METHOD_DEFS
         int methodDefs = objBlock.getChildCount(TokenTypes.METHOD_DEF);
-        System.out.println("method def = " +methodDefs);
         // report error if limit is reached
         if (methodDefs > this.max) {
             log(ast.getLineNo(),
