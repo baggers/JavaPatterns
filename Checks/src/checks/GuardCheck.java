@@ -80,8 +80,7 @@ public class GuardCheck extends Check
 			else
 			{
 				System.out.println("\tNo statement list found - method is strange.");
-			}
-				
+			}		
 		}
 		else
 		{
