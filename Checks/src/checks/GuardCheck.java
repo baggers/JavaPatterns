@@ -6,7 +6,7 @@ import com.puppycrawl.tools.checkstyle.api.*;
  * Guard Pattern Check for Checkstyle.
  * 
  * @author Alex Bagini
- * @version 0.1
+ * @version 0.2
  * 
  */
 public class GuardCheck extends Check
@@ -35,7 +35,14 @@ public class GuardCheck extends Check
 	 */
 	@Override
 	public void visitToken(DetailAST ast)
-	{		
+	{
+		// Sanity check for no methods specified in xml config to check for Guard Pattern
+		if (mName == null)
+		{
+			System.out.println("No methods specified to be checked.");
+			return;
+		}
+		
 		// Find the identity of the token being visited
 		String s = ast.findFirstToken(TokenTypes.IDENT).toString();
 		// Convert the identity to a readable method string
@@ -93,7 +100,7 @@ public class GuardCheck extends Check
 	 */
 	public void setMethodName(String[] mName)
 	{
-		this.mName = mName;
+		this.mName = mName.clone();
 		// Verbose message to be removed later
 		for(String s: this.mName)
 		{
