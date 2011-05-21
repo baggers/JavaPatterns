@@ -1,21 +1,19 @@
 package checks;
 
-import antlr.collections.ASTEnumeration;
-import java.util.*;
-
 import com.puppycrawl.tools.checkstyle.api.*;
 
 /**
- * Guard Pattern Check for Checkstyle.
+ * Guard Method Pattern Check for Checkstyle.
  * 
  * @author Alex Bagini
- * @version 0.2
+ * @version 0.3
  * 
  */
 public class GuardMethodCheck extends Check
 {
 	private String[]	mName;
 	private String[] 	guardVars;
+	private boolean[]	found;
 	
 	private String		errMsg;
 
@@ -76,18 +74,18 @@ public class GuardMethodCheck extends Check
 					// Check exprs outside if block
 					checkExprs(ast);
 					
-					// Check guard variable
-					checkGuardVar(ast, ifAST, methodName);
+					// Check for guard variable(s)
+					checkGuardVar(ifAST, methodName);
 				}
 				
 				// Message output
-				if (!errMsg.isEmpty())
+				if (!errMsg.equals(""))
 				{
 					log(ast.getLineNo(), "Guard method pattern incorrectly implemented in ''"+methodName+"''." +errMsg);
 				}
 				else
 				{
-					System.out.println("\tGuard method pattern\t\tPASS");
+					System.out.println("\tGuard method pattern implemented.\t\tPASS");
 				}				
 			}
 		}
@@ -113,14 +111,14 @@ public class GuardMethodCheck extends Check
 			
 			if (!slist.branchContains(TokenTypes.LITERAL_IF))
 			{
-				System.out.println("\tNo if statement found.\tFAIL");
-				errMsg +="\n- Missing if statement.";
+				System.out.println("\tNo if statement found.\t\t\tFAIL");
+				errMsg +="\n\t- Missing if statement.";
 			}
 			else
 			{
 //**			TODO Check for more than 1 if statement - fail if it has more than 1
-				int numIfs 	= slist.getChildCount(TokenTypes.LITERAL_IF);
-				System.out.println("\t"+numIfs+" if statement(s) in method.");
+//				int numIfs 	= slist.getChildCount(TokenTypes.LITERAL_IF);
+//				System.out.println("\t"+numIfs+" if statement(s) in method.");
 				
 				
 				// if statement present - return the if AST
@@ -145,7 +143,7 @@ public class GuardMethodCheck extends Check
 		if(ast.branchContains(TokenTypes.LITERAL_ELSE))
 		{
 			System.out.println("\tElse statement found.\tFAIL");
-			errMsg+="\n- Else statement present.";
+			errMsg+="\n\t- Else statement present.";
 		}
 		else
 		{
@@ -164,102 +162,99 @@ public class GuardMethodCheck extends Check
 	{
 		if(ast.findFirstToken(TokenTypes.SLIST).getChildCount(TokenTypes.EXPR) > 0)
 		{
-			System.out.println("\tExpressions outside if statement block.\tFAIL");
-			errMsg+="\n- Expressions present outside if block.";
+			System.out.println("\tExpressions outside if statement block.\t\tFAIL");
+			errMsg+="\n\t- Expressions present outside if block.";
 		}
 		
 	}
 	
 	/**
+	 * TODO Re-Implement using DFS/BFS to check for ALL expression tokens in the ifAST
 	 * Checks the if AST for presence of the specified guard variables (At least 1 inside if statement)
 	 * 
 	 * @param ast the method AST
 	 * @param ifAST the if AST
 	 */
-	public void checkGuardVar(DetailAST ast, DetailAST ifAST, String mName)
+	public void checkGuardVar(DetailAST ifAST, String mName)
 	{
-		//*TESTING THIS PART - FIND IDENT IN IF SLIST TO CHECK NOT USED OUTSIDE IF STATEMENT********************
-		
-		// if statement list
-		DetailAST ifSlist 	= ifAST.findFirstToken(TokenTypes.SLIST);
-			
-		// Know this is how many expressions to check for the guard variable
-		int numIfExprs		= ifSlist.getChildCount(TokenTypes.EXPR);
-		if (numIfExprs == 0) System.out.println("Shit has hit the fan, there is no exprs in the if block.");
-		
-		
 		/*
-		 * Here have the if statement list - need to count at least one instance of the guard var inside here
-		 * Then need to check that there is no instance of it outside the if statement (i.e. count inside = count outside)
+		 *  Concept:
+		 *  Traverse if slist tree
+		 *  Find all exprs (At present this only searches the immediate children of if slist for exprs)
+		 *  Find first child of each expr - flag in found array if matches a guard var
+		 *  Output if all guard vars were found
 		 */
 		
-		// Need to check each EXPR in the ifSlist to find a guard var as the first token
-		// from EXPR we know next will be some sort of assign (child) then we look for first IDENT token and compare
+		// Flag found each guard variable - if any remain false at the end of this method, the pattern has not been implemented correctly
+		found 	= new boolean[guardVars.length];
+			
+		// if statement list
+		DetailAST ifSlist 	= ifAST.findFirstToken(TokenTypes.SLIST);
 		
+		// Know this is how many expressions to check for the guard variable(s)
+		int numIfExprs	= ifSlist.getChildCount(TokenTypes.EXPR);
+		//System.out.println("Num exprs" +numIfExprs);
 		
-		// See how many expressions in the SLIST so we know how many EXPRs to check for the guard var
-		
-		// getChildCount only does direct children - need to find ALL
-		
-		
-//		ifAST.findAll(TokenTypes.EXPR);
-//		System.out.println("\tnumber of expr in if: " +numIfExpr);
-//		
-//		int numExpr		= ast.getChildCount(TokenTypes.EXPR);
-//		System.out.println("\tnumber of expr: " +numExpr);
-//		
-//		if (numIfExpr != numExpr)
-//		{
-//			System.out.println("\tExpressions outside if statement present.\tFAIL");
-//			log(ast.getLineNo(), "Guard pattern incorrectly implemented in ''" +mName+ "''. Expressions present outside if statement.");
-//		}
-		
-		
-		
-		
-/*		//Bad assumption that first ident come across is the actual guard var
-		//TODO find out how to traverse to OTHER exprs in the tree
-		DetailAST ifIdent = ifSlist.findFirstToken(TokenTypes.EXPR).getFirstChild().findFirstToken(TokenTypes.IDENT);
-								
-		// This is the ident token found in the expr
-		// Need to ensure this is not used elsewhere in the method def token
-		String var = util.StringUtil.fixName(ifIdent.toString());
-		System.out.println("\tInside if statement found ident token: "+var+"\n\tMust check number of occurences of this ident in method.");
-		
-		ASTEnumeration varTree = ast.findAll(ifIdent);
-		int countTotal 	= 0;
-		int count		= 0;
-		
-		// count the instances of the var in the whole method
-		while (varTree.hasMoreNodes())
+		// Check that there are expressions present
+		if (numIfExprs == 0)
 		{
-			countTotal++;
-			varTree.nextNode();
+			System.out.println("Guarded variables not present in if block.");
+			errMsg +="\n\t- Guarded variables not present in if block.";
+			return;
 		}
 		
-		System.out.println("\tTotal count of "+var+" is "+countTotal);
+		DetailAST currentExpr	= ifSlist.findFirstToken(TokenTypes.EXPR);
+	//	System.out.println("Intial expr "+currentExpr);
 		
-		// count instances of the var in the if statement list
-		// NOTE: not working as intended - does not just traverse ifList ast
-		ASTEnumeration test = ifSlist.findAll(ifIdent);
-		while (test.hasMoreNodes())
-		{
-			count++;
-			test.nextNode();
-		}
-		
-		System.out.println("\tCount of "+var+" in if block is "+count);
-		
-		// Check that only 1 instance of the variable is used in the method - WRONG ASSUMPTION
-		// TODO correct assumption for the use of the var inside the if statement (limit or how to check 'outside' the if statement)
-		if (count != countTotal)
-		{
-			System.out.println("\tTotal count of " +var+" does not equal the count in the if statement list." +
-					"\n\tThere should be no other occurences.");
-		}
+		// Using getFirstChild twice skips the intermediate token and provides the variable x: from the expr x = y
+		// Other variations of expressions may exist and will simply be ignored at this stage.
+		// Need to check x against the specified guard variables
+		checkIdent(currentExpr.getFirstChild().getFirstChild());
 
-//****************************************************************************************************/
+		// Move to next sibling to avoid infinite looping
+		currentExpr = currentExpr.getNextSibling();
+	//	System.out.println("next expr after first "+currentExpr);
 		
+		// Loop through the immediate children of the if statement list looking for the numIfExprs expr tokens
+		// Check each expr tokens first var against the expected guard variables
+		
+		for (int i = 0; i < numIfExprs - 1; i++)
+		{
+			// loop until found the next expr - should be replaced with PROPER DFS/BFS methodology - simply searches the siblings no further depth-wise
+			while(currentExpr.getType() != TokenTypes.EXPR)
+			{
+				currentExpr = currentExpr.getNextSibling();
+	//			System.out.println("cur expr "+currentExpr.toString());
+			}
+			checkIdent(currentExpr.getFirstChild().getFirstChild());			
+		}
+		
+		// Check if all guard variables have been found
+		for (int i = 0; i < found.length; i++)
+		{
+			if (!found[i])
+			{
+				System.out.println("\tGuard variable '" +guardVars[i]+ "' not found.");
+				errMsg +="\n\t- Guard variable ''" +guardVars[i]+ "'' not found.";
+			}
+		}
+	}
+	
+	/**
+	 * Helper method - Check the name of the given ident token against each of the guard variables.
+	 * If the token is a guard variable set found to true.
+	 * @param ident the ident token to check
+	 */
+	private void checkIdent(DetailAST ident)
+	{
+		for (int i = 0; i < guardVars.length; i++)
+		{
+			if (util.StringUtil.fixName(ident.toString()).equals(guardVars[i]))
+			{
+	//			System.out.println("\tFound "+guardVars[i]);
+				found[i] = true;
+			}
+		}
 	}
 	
 	
@@ -282,7 +277,7 @@ public class GuardMethodCheck extends Check
 		this.guardVars = gVar.clone();
 		for(String s: this.guardVars)
 		{
-			System.out.println("Guard var: " +s);
+			System.out.println("Guard variable to be checked: " +s);
 		}
 		
 	}
