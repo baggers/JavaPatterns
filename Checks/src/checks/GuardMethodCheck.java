@@ -1,14 +1,12 @@
 package checks;
 
-import java.util.Stack;
-
 import com.puppycrawl.tools.checkstyle.api.*;
 
 /**
  * Guard Method Pattern Check for Checkstyle.
  * 
  * @author Alex Bagini
- * @version 0.3
+ * @version 0.4
  * 
  */
 public class GuardMethodCheck extends Check
@@ -33,11 +31,9 @@ public class GuardMethodCheck extends Check
 	 * 
 	 * At each Method Def token:
 	 * 1. Compare the method name with the list of methods to be checked (Set through the XML configuration file)
-	 * 2. If it is a match, check the method has applied the Guard Pattern 
+	 * 2. If it is a match, check the method has applied the Guard Method Pattern
 	 * 
-	 * TODO
-	 * - ensure that no further assignments are made to vars outside of the if statement
-	 * - add check for the if condition (should fail on if(true) etc)
+	 * @param ast the Method def token to be visited
 	 */
 	@Override
 	public void visitToken(DetailAST ast)
@@ -61,7 +57,7 @@ public class GuardMethodCheck extends Check
 		{
 			if (m.equals(methodName))
 			{
-				System.out.println("Visiting method: " +methodName);
+//				System.out.println("Visiting method: " +methodName);
 				
 				// Call other methods to check parts of the method AST
 				
@@ -74,7 +70,7 @@ public class GuardMethodCheck extends Check
 					checkElse(ifAST, methodName);
 					
 					// Check exprs outside if block
-					checkExprs(ast);
+					checkExprs(ast, methodName);
 					
 					// Check for guard variable(s)
 					checkGuardVar(ifAST, methodName);
@@ -83,11 +79,11 @@ public class GuardMethodCheck extends Check
 				// Message output
 				if (!errMsg.equals(""))
 				{
-					log(ast.getLineNo(), "Guard method pattern incorrectly implemented in ''"+methodName+"''." +errMsg);
+//					log(ast.getLineNo(), "Guard method pattern incorrectly implemented in ''"+methodName+"''." +errMsg);
 				}
 				else
 				{
-					System.out.println("\tGuard method pattern implemented.\t\tPASS");
+//					System.out.println("\tGuard method pattern implemented.\t\tPASS");
 				}				
 			}
 		}
@@ -113,8 +109,9 @@ public class GuardMethodCheck extends Check
 			
 			if (!slist.branchContains(TokenTypes.LITERAL_IF))
 			{
-				System.out.println("\tNo if statement found.\t\t\tFAIL");
-				errMsg +="\n\t- Missing if statement.";
+//				System.out.println("\tNo if statement found.\t\t\tFAIL");
+				log(slist.getLineNo(), "''"+mName+"'' missing if statement");
+//				errMsg +="\n\t- Missing if statement.";
 			}
 			else
 			{
@@ -129,7 +126,7 @@ public class GuardMethodCheck extends Check
 		}
 		else
 		{
-			System.out.println("\tMethod contains no statement list.");
+//			System.out.println("\tMethod contains no statement list.");
 		}
 		return null;
 	}
@@ -144,15 +141,10 @@ public class GuardMethodCheck extends Check
 	{
 		if(ast.branchContains(TokenTypes.LITERAL_ELSE))
 		{
-			System.out.println("\tElse statement found.\tFAIL");
-			errMsg+="\n\t- Else statement present.";
+//			System.out.println("\tElse statement found.\tFAIL");
+			log(ast.getLineNo(), "''"+mName+"'' has an else statement present.");
+//			errMsg+="\n\t- Else statement present.";
 		}
-		else
-		{
-			// Else statement not present = good
-			// TODO output for no else statement if necessary
-		}
-		
 	}
 	
 	/**
@@ -160,12 +152,13 @@ public class GuardMethodCheck extends Check
 	 * 
 	 * @param ast the method AST
 	 */
-	public void checkExprs(DetailAST ast)
+	public void checkExprs(DetailAST ast, String mName)
 	{
 		if(ast.findFirstToken(TokenTypes.SLIST).getChildCount(TokenTypes.EXPR) > 0)
 		{
-			System.out.println("\tExpressions outside if statement block.\t\tFAIL");
-			errMsg+="\n\t- Expressions present outside if block.";
+//			System.out.println("\tExpressions outside if statement block.\t\tFAIL");
+			log(ast.getLineNo(), "''"+mName+"'' has expressions outside if block.");
+//			errMsg+="\n\t- Expressions present outside if block.";
 		}
 		
 	}
@@ -191,15 +184,16 @@ public class GuardMethodCheck extends Check
 			
 		// if statement list
 		DetailAST ifSlist 	= ifAST.findFirstToken(TokenTypes.SLIST);
-		treeTraversal(ifSlist);
+		treeTraversal(ifSlist, TokenTypes.EXPR);
 		
 		// Check if all guard variables have been found
 		for (int i = 0; i < found.length; i++)
 		{
 			if (!found[i])
 			{
-				System.out.println("\tGuard variable '" +guardVars[i]+ "' not found.");
-				errMsg +="\n\t- Guard variable ''" +guardVars[i]+ "'' not found.";
+//				System.out.println("\tGuard variable '" +guardVars[i]+ "' not found.");
+				log(ifSlist.getLineNo(), "''"+mName+"'' did not guard "+guardVars[i]+".");
+//				errMsg +="\n\t- Guard variable ''" +guardVars[i]+ "'' not found.";
 			}
 		}
 	}
@@ -215,24 +209,25 @@ public class GuardMethodCheck extends Check
 		{
 			if (util.StringUtil.fixName(ident.toString()).equals(guardVars[i]))
 			{
-				System.out.println("\tFound "+guardVars[i]);
 				found[i] = true;
 			}
 		}
 	}
 	
-	
 	/**
-	 * Adrians helpful instruction produced the following method of awesomeness
-	 * TODO Possible optimisation - if already found all the guard vars - no need to continue traversal
-	 * @param a
+	 * AST traversal method. Given a starting AST 'a', traverses the tree looking for the specified 'type' token.
+	 * When the token is found checkIdent is called to check the EXPR (default type searched for).
+	 * 
+	 * TODO Extension to make the method more viable with different token types and what to do when the type is found.
+	 * @param a the AST to be traversed
+	 * @param type the token type to find in 'a'
 	 */
-	public void treeTraversal(DetailAST a)
+	public void treeTraversal(DetailAST a, int type)
 	{
 		if (a == null)
 			return;
 		// Check if EXPR - if it is check for guard variable
-		if (a.getType() == TokenTypes.EXPR)
+		if (a.getType() == type)
 		{
 			// check the expr to see if it contains the specified guard variable
 			// TODO note what situations might this double getFirstChild fail for an EXPR ?
@@ -249,7 +244,7 @@ public class GuardMethodCheck extends Check
 		
 		while(true)
 		{
-			treeTraversal(currentTree);
+			treeTraversal(currentTree, type);
 			currentTree	= currentTree.getNextSibling();
 			if (currentTree == null)
 				return;
@@ -263,11 +258,6 @@ public class GuardMethodCheck extends Check
 	public void setMethodName(String[] mName)
 	{
 		this.mName = mName.clone();
-		// Verbose message to be removed later
-		for(String s: this.mName)
-		{
-			System.out.println("Method to be checked: " +s);
-		}
 	}
 	
 	/**
@@ -277,11 +267,6 @@ public class GuardMethodCheck extends Check
 	public void setGuardVariable(String[] gVar)
 	{
 		this.guardVars = gVar.clone();
-		for(String s: this.guardVars)
-		{
-			System.out.println("Guard variable to be checked: " +s);
-		}
-		
 	}
 
 }
