@@ -1,5 +1,7 @@
 package checks;
 
+import java.util.Stack;
+
 import com.puppycrawl.tools.checkstyle.api.*;
 
 /**
@@ -10,7 +12,7 @@ import com.puppycrawl.tools.checkstyle.api.*;
  * 
  */
 public class GuardMethodCheck extends Check
-{
+{	
 	private String[]	mName;
 	private String[] 	guardVars;
 	private boolean[]	found;
@@ -169,8 +171,7 @@ public class GuardMethodCheck extends Check
 	}
 	
 	/**
-	 * TODO Re-Implement using DFS/BFS to check for ALL expression tokens in the ifAST
-	 * Checks the if AST for presence of the specified guard variables (At least 1 inside if statement)
+	 * Checks the if AST for presence of the specified property guard variables (At least 1 occurrence inside if statement list)
 	 * 
 	 * @param ast the method AST
 	 * @param ifAST the if AST
@@ -190,44 +191,7 @@ public class GuardMethodCheck extends Check
 			
 		// if statement list
 		DetailAST ifSlist 	= ifAST.findFirstToken(TokenTypes.SLIST);
-		
-		// Know this is how many expressions to check for the guard variable(s)
-		int numIfExprs	= ifSlist.getChildCount(TokenTypes.EXPR);
-		//System.out.println("Num exprs" +numIfExprs);
-		
-		// Check that there are expressions present
-		if (numIfExprs == 0)
-		{
-			System.out.println("Guarded variables not present in if block.");
-			errMsg +="\n\t- Guarded variables not present in if block.";
-			return;
-		}
-		
-		DetailAST currentExpr	= ifSlist.findFirstToken(TokenTypes.EXPR);
-	//	System.out.println("Intial expr "+currentExpr);
-		
-		// Using getFirstChild twice skips the intermediate token and provides the variable x: from the expr x = y
-		// Other variations of expressions may exist and will simply be ignored at this stage.
-		// Need to check x against the specified guard variables
-		checkIdent(currentExpr.getFirstChild().getFirstChild());
-
-		// Move to next sibling to avoid infinite looping
-		currentExpr = currentExpr.getNextSibling();
-	//	System.out.println("next expr after first "+currentExpr);
-		
-		// Loop through the immediate children of the if statement list looking for the numIfExprs expr tokens
-		// Check each expr tokens first var against the expected guard variables
-		
-		for (int i = 0; i < numIfExprs - 1; i++)
-		{
-			// loop until found the next expr - should be replaced with PROPER DFS/BFS methodology - simply searches the siblings no further depth-wise
-			while(currentExpr.getType() != TokenTypes.EXPR)
-			{
-				currentExpr = currentExpr.getNextSibling();
-	//			System.out.println("cur expr "+currentExpr.toString());
-			}
-			checkIdent(currentExpr.getFirstChild().getFirstChild());			
-		}
+		treeTraversal(ifSlist);
 		
 		// Check if all guard variables have been found
 		for (int i = 0; i < found.length; i++)
@@ -245,18 +209,52 @@ public class GuardMethodCheck extends Check
 	 * If the token is a guard variable set found to true.
 	 * @param ident the ident token to check
 	 */
-	private void checkIdent(DetailAST ident)
+	public void checkIdent(DetailAST ident)
 	{
 		for (int i = 0; i < guardVars.length; i++)
 		{
 			if (util.StringUtil.fixName(ident.toString()).equals(guardVars[i]))
 			{
-	//			System.out.println("\tFound "+guardVars[i]);
+				System.out.println("\tFound "+guardVars[i]);
 				found[i] = true;
 			}
 		}
 	}
 	
+	
+	/**
+	 * Adrians helpful instruction produced the following method of awesomeness
+	 * TODO Possible optimisation - if already found all the guard vars - no need to continue traversal
+	 * @param a
+	 */
+	public void treeTraversal(DetailAST a)
+	{
+		if (a == null)
+			return;
+		// Check if EXPR - if it is check for guard variable
+		if (a.getType() == TokenTypes.EXPR)
+		{
+			// check the expr to see if it contains the specified guard variable
+			// TODO note what situations might this double getFirstChild fail for an EXPR ?
+			checkIdent(a.getFirstChild().getFirstChild());
+			// return now and continue with the recursive dfs which will search other siblings
+			return;
+		}
+		// Perform the recursive search
+		DetailAST currentTree 	= a.getFirstChild();
+		if (currentTree == null)
+		{
+			return;
+		}
+		
+		while(true)
+		{
+			treeTraversal(currentTree);
+			currentTree	= currentTree.getNextSibling();
+			if (currentTree == null)
+				return;
+		}
+	}	
 	
 	/**
 	 * Sets the method name property
@@ -272,6 +270,10 @@ public class GuardMethodCheck extends Check
 		}
 	}
 	
+	/**
+	 * Sets the guard variable property
+	 * @param gVar string array of guard variables to ensure they appear in the guard methods
+	 */
 	public void setGuardVariable(String[] gVar)
 	{
 		this.guardVars = gVar.clone();
