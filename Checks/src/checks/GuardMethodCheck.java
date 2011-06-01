@@ -14,11 +14,10 @@ public class GuardMethodCheck extends Check
 	private String[]	mName;
 	private String[] 	guardVars;
 	private boolean[]	found;
-	
-	private String		errMsg;
 
 	/**
 	 * Return integer array of unique Token Types to visit
+	 * For GM Check we consider only Method_Def tokens.
 	 */
 	@Override
 	public int[] getDefaultTokens()
@@ -27,7 +26,7 @@ public class GuardMethodCheck extends Check
 	}
 	
 	/**
-	 * Visit each Method Def token
+	 * Visit each Method_Def token
 	 * 
 	 * At each Method Def token:
 	 * 1. Compare the method name with the list of methods to be checked (Set through the XML configuration file)
@@ -45,10 +44,9 @@ public class GuardMethodCheck extends Check
 			return;
 		}
 		
-		errMsg = "";
-		
-		// Find the identity of the token being visited
+		// Find the method identity of the token (i.e. the method name)
 		String s = ast.findFirstToken(TokenTypes.IDENT).toString();
+		
 		// Convert the identity to a readable method string
 		String methodName = util.StringUtil.fixName(s);
 		
@@ -59,32 +57,30 @@ public class GuardMethodCheck extends Check
 			{
 //				System.out.println("Visiting method: " +methodName);
 				
-				// Call other methods to check parts of the method AST
+				// Begin GM Check
+				boolean success	= true;
 				
 				// Check if statement in method
-				DetailAST ifAST = checkIf(ast, methodName);
+				DetailAST ifAST = checkIf(ast, methodName);				
 				
+				// If the method contains the minimal required if statement check the following
 				if (ifAST != null)
 				{
-					// Check no else
-					checkElse(ifAST, methodName);
-					
-					// Check exprs outside if block
-					checkExprs(ast, methodName);
-					
-					// Check for guard variable(s)
-					checkGuardVar(ifAST, methodName);
-				}
-				
-				// Message output
-				if (!errMsg.equals(""))
-				{
-//					log(ast.getLineNo(), "Guard method pattern incorrectly implemented in ''"+methodName+"''." +errMsg);
+					// Check no else, outside if block exprs and that all guard variables are guarded inside if block
+					success =	checkElse(ifAST, methodName) &&
+								checkExprs(ast, methodName) &&
+								checkGuardVar(ifAST, methodName);
 				}
 				else
 				{
-//					System.out.println("\tGuard method pattern implemented.\t\tPASS");
-				}				
+					success = false;
+				}
+				
+				// Report success of implementation for the method
+				if (success)
+					log(ast.getLineNo(), "Suc_GM_All ''"+methodName+"'' correctly implemented Guard Method check");
+				else
+					log(ast.getLineNo(), "Err_GM_All ''"+methodName+"'' incorrectly implemented Guard Method check");
 			}
 		}
 
@@ -110,16 +106,12 @@ public class GuardMethodCheck extends Check
 			if (!slist.branchContains(TokenTypes.LITERAL_IF))
 			{
 //				System.out.println("\tNo if statement found.\t\t\tFAIL");
-				log(slist.getLineNo(), "''"+mName+"'' missing if statement");
+				log(slist.getLineNo(), "Err_GM_If ''"+mName+"'' missing if statement");
 //				errMsg +="\n\t- Missing if statement.";
 			}
 			else
-			{
-//**			TODO Check for more than 1 if statement - fail if it has more than 1
-//				int numIfs 	= slist.getChildCount(TokenTypes.LITERAL_IF);
-//				System.out.println("\t"+numIfs+" if statement(s) in method.");
-				
-				
+			{			
+				log(slist.getLineNo(), "Suc_GM_If ''"+mName+"'' uses if statement");
 				// if statement present - return the if AST
 				return slist.findFirstToken(TokenTypes.LITERAL_IF); 
 			}
@@ -137,13 +129,19 @@ public class GuardMethodCheck extends Check
 	 * @param ast the method AST to be checked
 	 * @param mName the method AST name
 	 */
-	public void checkElse(DetailAST ast, String mName)
+	public boolean checkElse(DetailAST ast, String mName)
 	{
 		if(ast.branchContains(TokenTypes.LITERAL_ELSE))
 		{
 //			System.out.println("\tElse statement found.\tFAIL");
-			log(ast.getLineNo(), "''"+mName+"'' has an else statement present.");
+			log(ast.getLineNo(), "Err_GM_Else ''"+mName+"'' has an else statement present");
+			return false;
 //			errMsg+="\n\t- Else statement present.";
+		}
+		else
+		{
+			log(ast.getLineNo(), "Suc_GM_Else ''"+mName+"'' does not contain else statement");
+			return true;
 		}
 	}
 	
@@ -152,13 +150,19 @@ public class GuardMethodCheck extends Check
 	 * 
 	 * @param ast the method AST
 	 */
-	public void checkExprs(DetailAST ast, String mName)
+	public boolean checkExprs(DetailAST ast, String mName)
 	{
 		if(ast.findFirstToken(TokenTypes.SLIST).getChildCount(TokenTypes.EXPR) > 0)
 		{
 //			System.out.println("\tExpressions outside if statement block.\t\tFAIL");
-			log(ast.getLineNo(), "''"+mName+"'' has expressions outside if block.");
+			log(ast.getLineNo(), "Err_GM_Exprs ''"+mName+"'' has expressions outside if block");
 //			errMsg+="\n\t- Expressions present outside if block.";
+			return false;
+		}
+		else
+		{
+			log(ast.getLineNo(), "Suc_GM_Exprs ''"+mName+"'' has no expressions outside if block");
+			return true;
 		}
 		
 	}
@@ -169,7 +173,7 @@ public class GuardMethodCheck extends Check
 	 * @param ast the method AST
 	 * @param ifAST the if AST
 	 */
-	public void checkGuardVar(DetailAST ifAST, String mName)
+	public boolean checkGuardVar(DetailAST ifAST, String mName)
 	{
 		/*
 		 *  Concept:
@@ -186,16 +190,24 @@ public class GuardMethodCheck extends Check
 		DetailAST ifSlist 	= ifAST.findFirstToken(TokenTypes.SLIST);
 		treeTraversal(ifSlist, TokenTypes.EXPR);
 		
+		boolean foundAllGV	= true;
 		// Check if all guard variables have been found
 		for (int i = 0; i < found.length; i++)
 		{
 			if (!found[i])
 			{
 //				System.out.println("\tGuard variable '" +guardVars[i]+ "' not found.");
-				log(ifSlist.getLineNo(), "''"+mName+"'' did not guard "+guardVars[i]+".");
-//				errMsg +="\n\t- Guard variable ''" +guardVars[i]+ "'' not found.";
+				log(ifSlist.getLineNo(), "Err_GM_GVar ''"+mName+"'' did not guard "+guardVars[i]);
+				foundAllGV = false;
 			}
 		}
+		
+		if(foundAllGV)
+		{
+			log(ifSlist.getLineNo(), "Suc_GM_GVar ''"+mName+"'' guarded the specified guard variables");
+			return true;
+		}
+		return false;
 	}
 	
 	/**
@@ -205,9 +217,12 @@ public class GuardMethodCheck extends Check
 	 */
 	public void checkIdent(DetailAST ident)
 	{
+		String exprLeftVar = util.StringUtil.fixName(ident.toString());
 		for (int i = 0; i < guardVars.length; i++)
 		{
-			if (util.StringUtil.fixName(ident.toString()).equals(guardVars[i]))
+			// Check if a guard variable or a this.guard variable
+			// E.g. guard variable balance and this.balance
+			if (exprLeftVar.equals(guardVars[i]) || exprLeftVar.equals("this."+guardVars[i]));
 			{
 				found[i] = true;
 			}
@@ -268,5 +283,4 @@ public class GuardMethodCheck extends Check
 	{
 		this.guardVars = gVar.clone();
 	}
-
 }
