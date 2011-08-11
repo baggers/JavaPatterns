@@ -8,7 +8,7 @@ import com.puppycrawl.tools.checkstyle.api.*;
  * @version 0.1
  *
  */
-public class ConstructorPattern extends Check {
+public class ConstructorCheck extends Check {
 
 	/**
 	 * @return integer array containing the types of tokens/nodes for the constructor pattern check
