@@ -54,36 +54,34 @@ public class GuardMethodCheck extends Check
 		for(String m: this.mName)
 		{
 			if (m.equals(methodName))
-			{
-//				System.out.println("Visiting method: " +methodName);
+			{				
+				// Flags for each condition of success
+				boolean i = false, e = false, oi = false, gv = false;
 				
-				// Begin GM Check
-				boolean success	= true;
+				// Check the method contains a statement list
+				DetailAST slist	= ast.findFirstToken(TokenTypes.SLIST);
+				
+				if (slist == null)
+				{
+					System.out.println("No slist found in " +methodName);
+					continue;
+				}
 				
 				// Check if statement in method
-				DetailAST ifAST = checkIf(ast, methodName);				
+				DetailAST ifAST = checkIf(slist);
 				
 				// If the method contains the minimal required if statement check the following
 				if (ifAST != null)
 				{
-					// Check no else, outside if block exprs and that all guard variables are guarded inside if block
-					success =	checkElse(ifAST, methodName) &&
-								checkExprs(ast, methodName) &&
-								checkGuardVar(ifAST, methodName);
-				}
-				else
-				{
-					success = false;
+					i	= true;
+					e	= checkElse(ifAST);
+					oi	= checkOutsideIf(ast);
+					gv	= checkGuardVar(ifAST, methodName);
 				}
 				
-				// Report success of implementation for the method
-				if (success)
-					log(ast.getLineNo(), "Suc_GM_All ''"+methodName+"'' correctly implemented Guard Method check");
-				else
-					log(ast.getLineNo(), "Err_GM_All ''"+methodName+"'' incorrectly implemented Guard Method check");
+				reportLog(ast, methodName, i, e, oi, gv);
 			}
 		}
-
 	}
 	
 	/**
@@ -94,33 +92,9 @@ public class GuardMethodCheck extends Check
 	 * @param mName method AST name
 	 * @return the if AST if it exists, null otherwise
 	 */
-	public DetailAST checkIf(DetailAST ast, String mName)
-	{
-		
-		
-		DetailAST slist	= ast.findFirstToken(TokenTypes.SLIST);
-		
-		if (slist != null)
-		{
-			
-			if (!slist.branchContains(TokenTypes.LITERAL_IF))
-			{
-//				System.out.println("\tNo if statement found.\t\t\tFAIL");
-				log(slist.getLineNo(), "Err_GM_If ''"+mName+"'' missing if statement");
-//				errMsg +="\n\t- Missing if statement.";
-			}
-			else
-			{			
-				log(slist.getLineNo(), "Suc_GM_If ''"+mName+"'' uses if statement");
-				// if statement present - return the if AST
-				return slist.findFirstToken(TokenTypes.LITERAL_IF); 
-			}
-		}
-		else
-		{
-//			System.out.println("\tMethod contains no statement list.");
-		}
-		return null;
+	public DetailAST checkIf(DetailAST ast)
+	{		
+		return ast.findFirstToken(TokenTypes.LITERAL_IF);
 	}
 	
 	/**
@@ -129,20 +103,9 @@ public class GuardMethodCheck extends Check
 	 * @param ast the method AST to be checked
 	 * @param mName the method AST name
 	 */
-	public boolean checkElse(DetailAST ast, String mName)
-	{
-		if(ast.branchContains(TokenTypes.LITERAL_ELSE))
-		{
-//			System.out.println("\tElse statement found.\tFAIL");
-			log(ast.getLineNo(), "Err_GM_Else ''"+mName+"'' has an else statement present");
-			return false;
-//			errMsg+="\n\t- Else statement present.";
-		}
-		else
-		{
-			log(ast.getLineNo(), "Suc_GM_Else ''"+mName+"'' does not contain else statement");
-			return true;
-		}
+	public boolean checkElse(DetailAST ast)
+	{	
+		return ast.branchContains(TokenTypes.LITERAL_ELSE);
 	}
 	
 	/**
@@ -150,21 +113,9 @@ public class GuardMethodCheck extends Check
 	 * 
 	 * @param ast the method AST
 	 */
-	public boolean checkExprs(DetailAST ast, String mName)
+	public boolean checkOutsideIf(DetailAST ast)
 	{
-		if(ast.findFirstToken(TokenTypes.SLIST).getChildCount(TokenTypes.EXPR) > 0)
-		{
-//			System.out.println("\tExpressions outside if statement block.\t\tFAIL");
-			log(ast.getLineNo(), "Err_GM_Exprs ''"+mName+"'' has expressions outside if block");
-//			errMsg+="\n\t- Expressions present outside if block.";
-			return false;
-		}
-		else
-		{
-			log(ast.getLineNo(), "Suc_GM_Exprs ''"+mName+"'' has no expressions outside if block");
-			return true;
-		}
-		
+		return ast.findFirstToken(TokenTypes.SLIST).getChildCount(TokenTypes.EXPR) > 0;
 	}
 	
 	/**
@@ -173,7 +124,7 @@ public class GuardMethodCheck extends Check
 	 * @param ast the method AST
 	 * @param ifAST the if AST
 	 */
-	public boolean checkGuardVar(DetailAST ifAST, String mName)
+	public boolean checkGuardVar(DetailAST ifAST, String m)
 	{
 		/*
 		 *  Concept:
@@ -191,23 +142,17 @@ public class GuardMethodCheck extends Check
 		treeTraversal(ifSlist, TokenTypes.EXPR);
 		
 		boolean foundAllGV	= true;
+		
 		// Check if all guard variables have been found
 		for (int i = 0; i < found.length; i++)
 		{
 			if (!found[i])
 			{
-//				System.out.println("\tGuard variable '" +guardVars[i]+ "' not found.");
-				log(ifSlist.getLineNo(), "Err_GM_GVar ''"+mName+"'' did not guard "+guardVars[i]);
+				log(ifSlist.getLineNo(), "Err_GM_GVar ''"+m+"'' did not guard "+guardVars[i]);
 				foundAllGV = false;
 			}
 		}
-		
-		if(foundAllGV)
-		{
-			log(ifSlist.getLineNo(), "Suc_GM_GVar ''"+mName+"'' guarded the specified guard variables");
-			return true;
-		}
-		return false;
+		return foundAllGV;
 	}
 	
 	/**
@@ -227,6 +172,37 @@ public class GuardMethodCheck extends Check
 				found[i] = true;
 			}
 		}
+	}
+	
+	/**
+	 * Outputs Checkstyle log report on methods implementation of the Guard Method Check
+	 */
+	public void reportLog(DetailAST a, String m, boolean i, boolean e, boolean oi, boolean gv)
+	{
+		if (i)
+			log(a.getLineNo(), "Suc_GM_If ''"+m+"'' uses if statement");
+		else
+			log(a.getLineNo(), "Err_GM_If ''"+m+"'' uses if statement");
+		
+		if (e)
+			log(a.getLineNo(), "Suc_GM_Else ''"+m+"'' does not have a redundant else");
+		else
+			log(a.getLineNo(), "Err_GM_If ''"+m+"'' uses a redundant else");
+		
+		if (oi)
+			log(a.getLineNo(), "Suc_GM_Exprs ''"+m+"'' does not use expressions outside if block");
+		else
+			log(a.getLineNo(), "Err_GM_If ''"+m+"'' uses expressions outside if block");
+		
+		if (gv)
+			log(a.getLineNo(), "Suc_GM_If ''"+m+"'' guards specified variables");
+		else
+			log(a.getLineNo(), "Err_GM_If ''"+m+"'' does not guard specified variables");
+			
+		if (i && e && oi && gv)
+			log(a.getLineNo(), "Suc_GM_Pass ''"+m+"'' correctly implements Guard Method Pattern");
+		else
+			log(a.getLineNo(), "Err_GM_Fail ''"+m+"'' incorrectly implements Guard Method Pattern");
 	}
 	
 	/**

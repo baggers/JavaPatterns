@@ -2,6 +2,11 @@ package checks;
 
 import com.puppycrawl.tools.checkstyle.api.*;
 
+/**
+ * Test class to experiment with the use of checkstyle custom checks.
+ * @author alex
+ *
+ */
 public class MethodLimitCheck extends Check
 {
     private static final int DEFAULT_MAX = 30;
