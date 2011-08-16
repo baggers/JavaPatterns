@@ -187,17 +187,17 @@ public class GuardMethodCheck extends Check
 		if (e)
 			log(a.getLineNo(), "Suc_GM_Else ''"+m+"'' does not have a redundant else");
 		else
-			log(a.getLineNo(), "Err_GM_If ''"+m+"'' uses a redundant else");
+			log(a.getLineNo(), "Err_GM_Else ''"+m+"'' uses a redundant else");
 		
 		if (oi)
 			log(a.getLineNo(), "Suc_GM_Exprs ''"+m+"'' does not use expressions outside if block");
 		else
-			log(a.getLineNo(), "Err_GM_If ''"+m+"'' uses expressions outside if block");
+			log(a.getLineNo(), "Err_GM_Exprs ''"+m+"'' uses expressions outside if block");
 		
 		if (gv)
-			log(a.getLineNo(), "Suc_GM_If ''"+m+"'' guards specified variables");
+			log(a.getLineNo(), "Suc_GM_GuardVar ''"+m+"'' guards specified variables");
 		else
-			log(a.getLineNo(), "Err_GM_If ''"+m+"'' does not guard specified variables");
+			log(a.getLineNo(), "Err_GM_GuardVar ''"+m+"'' does not guard specified variables");
 			
 		if (i && e && oi && gv)
 			log(a.getLineNo(), "Suc_GM_Pass ''"+m+"'' correctly implements Guard Method Pattern");
