@@ -95,7 +95,7 @@ public class GuardMethodCheck extends Check
 			if (i)
 				log(a.getLineNo(), "Suc_GM_If ''"+m+"'' uses if statement");
 			else
-				log(a.getLineNo(), "Err_GM_If ''"+m+"'' uses if statement");
+				log(a.getLineNo(), "Err_GM_If ''"+m+"'' does not use if statement");
 			
 			if (e)
 				log(a.getLineNo(), "Suc_GM_Else ''"+m+"'' does not have a redundant else");
@@ -140,21 +140,22 @@ public class GuardMethodCheck extends Check
 	 * Checks the method AST for presence of an else statement.
 	 * 
 	 * @param ast the method AST to be checked
-	 * @param mName the method AST name
+	 * @return true if the branch does not contain an else statement, false otherwise
 	 */
 	private boolean checkElse(DetailAST ast)
 	{	
-		return ast.branchContains(TokenTypes.LITERAL_ELSE);
+		return !ast.branchContains(TokenTypes.LITERAL_ELSE);
 	}
 	
 	/**
 	 * Checks the method for expressions present outside the if statement block.
 	 * 
 	 * @param ast the method AST
+	 * @return true if there are no expressions present outside the if statement, false otherwise
 	 */
 	private boolean checkOutsideIf(DetailAST ast)
 	{
-		return ast.findFirstToken(TokenTypes.SLIST).getChildCount(TokenTypes.EXPR) > 0;
+		return ast.findFirstToken(TokenTypes.SLIST).getChildCount(TokenTypes.EXPR) == 0;
 	}
 	
 	/**
@@ -162,6 +163,7 @@ public class GuardMethodCheck extends Check
 	 * 
 	 * @param ast the method AST
 	 * @param ifAST the if AST
+	 * @return true if all the guard variables have been found, false otherwise
 	 */
 	private boolean checkGuardVar(DetailAST ifAST, String m)
 	{
