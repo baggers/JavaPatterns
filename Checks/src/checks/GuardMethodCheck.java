@@ -11,9 +11,9 @@ import com.puppycrawl.tools.checkstyle.api.*;
  */
 public class GuardMethodCheck extends Check
 {	
-	private String[]	mName;
-	private String[] 	guardVars;
+	private String[]	mName, guardVars;
 	private boolean[]	found;
+	private int			reportStyle;
 
 	/**
 	 * Return integer array of unique Token Types to visit
@@ -79,8 +79,47 @@ public class GuardMethodCheck extends Check
 					gv	= checkGuardVar(ifAST, methodName);
 				}
 				
-				reportLog(ast, methodName, i, e, oi, gv);
+				reportLog(reportStyle, ast, methodName, i, e, oi, gv);
 			}
+		}
+	}
+	
+	/**
+	 * Outputs Checkstyle log report on methods implementation of the Guard Method Check
+	 */
+	private void reportLog(int style, DetailAST a, String m, boolean i, boolean e, boolean oi, boolean gv)
+	{
+		switch (style) {
+		case 0: System.out.println("Lecturer output summary style - TBD"); break;
+		case 1:
+			if (i)
+				log(a.getLineNo(), "Suc_GM_If ''"+m+"'' uses if statement");
+			else
+				log(a.getLineNo(), "Err_GM_If ''"+m+"'' uses if statement");
+			
+			if (e)
+				log(a.getLineNo(), "Suc_GM_Else ''"+m+"'' does not have a redundant else");
+			else
+				log(a.getLineNo(), "Err_GM_Else ''"+m+"'' uses a redundant else");
+			
+			if (oi)
+				log(a.getLineNo(), "Suc_GM_Exprs ''"+m+"'' does not use expressions outside if block");
+			else
+				log(a.getLineNo(), "Err_GM_Exprs ''"+m+"'' uses expressions outside if block");
+			
+			if (gv)
+				log(a.getLineNo(), "Suc_GM_GuardVar ''"+m+"'' guards specified variables");
+			else
+				log(a.getLineNo(), "Err_GM_GuardVar ''"+m+"'' does not guard specified variables");
+				
+			if (i && e && oi && gv)
+				log(a.getLineNo(), "Suc_GM_Pass ''"+m+"'' correctly implements Guard Method Pattern");
+			else
+				log(a.getLineNo(), "Err_GM_Fail ''"+m+"'' incorrectly implements Guard Method Pattern");
+			break;
+			default: System.out.println("Style undefined - please specify a reportStyle in the XML configuration file.\n" +
+					"0 - Lecturer summary output [Codes only]\n" +
+					"1 - Student verbose feedback"); break;
 		}
 	}
 	
@@ -175,37 +214,6 @@ public class GuardMethodCheck extends Check
 	}
 	
 	/**
-	 * Outputs Checkstyle log report on methods implementation of the Guard Method Check
-	 */
-	private void reportLog(DetailAST a, String m, boolean i, boolean e, boolean oi, boolean gv)
-	{
-		if (i)
-			log(a.getLineNo(), "Suc_GM_If ''"+m+"'' uses if statement");
-		else
-			log(a.getLineNo(), "Err_GM_If ''"+m+"'' uses if statement");
-		
-		if (e)
-			log(a.getLineNo(), "Suc_GM_Else ''"+m+"'' does not have a redundant else");
-		else
-			log(a.getLineNo(), "Err_GM_Else ''"+m+"'' uses a redundant else");
-		
-		if (oi)
-			log(a.getLineNo(), "Suc_GM_Exprs ''"+m+"'' does not use expressions outside if block");
-		else
-			log(a.getLineNo(), "Err_GM_Exprs ''"+m+"'' uses expressions outside if block");
-		
-		if (gv)
-			log(a.getLineNo(), "Suc_GM_GuardVar ''"+m+"'' guards specified variables");
-		else
-			log(a.getLineNo(), "Err_GM_GuardVar ''"+m+"'' does not guard specified variables");
-			
-		if (i && e && oi && gv)
-			log(a.getLineNo(), "Suc_GM_Pass ''"+m+"'' correctly implements Guard Method Pattern");
-		else
-			log(a.getLineNo(), "Err_GM_Fail ''"+m+"'' incorrectly implements Guard Method Pattern");
-	}
-	
-	/**
 	 * AST traversal method. Given a starting AST 'a', traverses the tree looking for the specified 'type' token.
 	 * When the token is found checkIdent is called to check the EXPR (default type searched for).
 	 * 
@@ -258,5 +266,10 @@ public class GuardMethodCheck extends Check
 	public void setGuardVariable(String[] gVar)
 	{
 		this.guardVars = gVar.clone();
+	}
+	
+	public void setReportStyle(int a)
+	{
+		reportStyle = a;
 	}
 }

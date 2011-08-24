@@ -13,6 +13,7 @@ public class SingleForLoopCheck extends Check {
 	
 	private String[]	mName;
 	private String		aName, initLocalVar;
+	private int			reportStyle;
 	
 	/**
 	 * Return integer array of unique Token Types to visit
@@ -69,6 +70,7 @@ public class SingleForLoopCheck extends Check {
 			
 				// check statement list AST for local variable max/min = aName[0]
 				lv = checkLocalVariable(slist);
+//				System.out.println("lvar "+lv);
 								
 				DetailAST forAST = checkFor(slist);
 				// check for AST conditions:
@@ -80,17 +82,21 @@ public class SingleForLoopCheck extends Check {
 				{
 					f 	= true;
 					fc 	= checkForCondition(forAST);
+//					System.out.println("condition "+fc);
 					fi	= checkForInit(forAST);
+//					System.out.println("init "+fi);
 					fif	= checkIf(forAST);
+//					System.out.println("if "+fif);
 				}
 				
 				// if a local variable has been initialised inside the method - check it is returned correctly
 				if (lv)
 				{
 					fr	= checkReturn(slist);
+//					System.out.println("return "+fr);
 				}
 								
-				reportLog(ast, methodName, f, fc, fi, fif, fr, lv);
+				reportLog(reportStyle, ast, methodName, f, fc, fi, fif, fr, lv);
 			}
 		}
 	}
@@ -108,24 +114,52 @@ public class SingleForLoopCheck extends Check {
 	 * @param fif boolean for loop contains if statement for updating local variables
 	 * @param lv boolean local variables present outside for loop (e.g. local max/min)
 	 */
-	public void reportLog(DetailAST a, String m, boolean f, boolean fc, boolean fi, boolean fif, boolean fr, boolean lv)
+	public void reportLog(int style, DetailAST a, String m, boolean f, boolean fc, boolean fi, boolean fif, boolean fr, boolean lv)
 	{
-		if (f)
-			log(a.getLineNo(), "Suc_SFL_For ''"+m+"'' uses for loop");
-		else
-			log(a.getLineNo(), "Err_SFL_For ''"+m+"'' does not use for loop");
+		switch(style) {
+		case 0: System.out.println("Lecturer output summary style - TBD"); break;
+		case 1:
+			if (lv)
+				log(a.getLineNo(), "Suc_SFL_LocalVar ''"+m+"'' uses a local variable "+initLocalVar+" for calculation of the "+m);
+			else
+				log(a.getLineNo(), "Err_SFL_LocalVar ''"+m+"'' does not uuses a local variable "+initLocalVar+" for calculation of the "+m);
 		
-		if (fc)
-			log(a.getLineNo(), "Suc_SFL_For ''"+m+"'' uses length of ''"+aName+"'' as looping condition");
-		else
-			log(a.getLineNo(), "Err_SFL_For ''"+m+"'' does not use length of ''"+aName+"'' as looping condition");
-		
-		
-		// TODO add other booleans in as conditions are created
-		if (f && fc && fi && fif && lv)
-			log(a.getLineNo(), "Suc_SFL_Pass ''"+m+"'' correctly implements the Single For Loop pattern");
-		else
-			log(a.getLineNo(), "Err_SFL_Fail ''"+m+"'' incorrectly implements the Single For Loop pattern");
+			if (f)
+				log(a.getLineNo(), "Suc_SFL_For ''"+m+"'' uses a for loop");
+			else
+				log(a.getLineNo(), "Err_SFL_For ''"+m+"'' does not use a for loop");
+			
+			if (fc)
+				log(a.getLineNo(), "Suc_SFL_ForCond ''"+m+"'' uses length of ''"+aName+"'' as looping condition");
+			else
+				log(a.getLineNo(), "Err_SFL_ForCond ''"+m+"'' does not use length of ''"+aName+"'' as looping condition");
+			
+			if (fi)
+				log(a.getLineNo(), "Suc_SFL_ForInit ''"+m+"'' initialises for loop init with 2nd element in ''"+aName+"''");
+			else
+				log(a.getLineNo(), "Err_SFL_ForInit ''"+m+"'' does not initiliase for loop init with 2nd element in ''"+aName+"''");
+			
+			if (fif)
+				log(a.getLineNo(), "Suc_SFL_ForIf ''"+m+"'' uses an if statement inside the for loop");
+			else
+				log(a.getLineNo(), "Err_SFL_ForIf ''"+m+"'' does not use an if statement inside the for loop or includes a redundant else statement");
+			
+			if (fr)
+				log(a.getLineNo(), "Suc_SFL_Return ''"+m+"'' returns the local variable "+m);
+			else
+				log(a.getLineNo(), "Err_SFL_Return ''"+m+"'' does not return the local variable "+m);
+			
+			// TODO add other booleans in as conditions are created
+			if (f && fc && fi && fif && lv && fr)
+				log(a.getLineNo(), "Suc_SFL_Pass ''"+m+"'' correctly implements the Single For Loop pattern");
+			else
+				log(a.getLineNo(), "Err_SFL_Fail ''"+m+"'' incorrectly implements the Single For Loop pattern");
+			break;
+			
+		default: System.out.println("Style undefined - please specify a reportStyle in the XML configuration file.\n" +
+				"0 - Lecturer summary output [Codes only]\n" +
+				"1 - Student verbose feedback"); break;
+		}
 	}
 	
 	/**
@@ -178,8 +212,8 @@ public class SingleForLoopCheck extends Check {
 	private boolean checkLocalVariable(DetailAST a)
 	{
 		treeTraversal(a, TokenTypes.EXPR);
-		System.out.println(initLocalVar +" for local var");
-		return initLocalVar.equals(null);
+//		System.out.println(initLocalVar +" for local var");
+		return !initLocalVar.equals(null);
 	}
 	
 	/**
@@ -196,7 +230,7 @@ public class SingleForLoopCheck extends Check {
 			// Obtain the for_init -> var_def -> assign -> expr -> num int
 			String iValue = init.getFirstChild().findFirstToken(TokenTypes.ASSIGN).getFirstChild().getFirstChild().toString();
 			// Compare the value held as the num int to 1
-			System.out.println(iValue+" for init i=1");
+//			System.out.println(iValue+" for init i=1");
 			return util.StringUtil.fixName(iValue).equals("1");
 		}
 		// Something is strange - should be a for loop with a for init..
@@ -213,13 +247,13 @@ public class SingleForLoopCheck extends Check {
 		DetailAST fslist = a.findFirstToken(TokenTypes.SLIST);
 		if (fslist != null)
 		{
-			System.out.println("Found if statement inside for loop");
+//			System.out.println("Found if statement inside for loop");
 			//TODO extend this to check for the local variables when decided upon how to implement
 
 			DetailAST litif = fslist.findFirstToken(TokenTypes.LITERAL_IF);
 			if (litif != null)
 			{
-				System.out.println(!litif.branchContains(TokenTypes.LITERAL_ELSE)+" else statement not in for loop");
+//				System.out.println(!litif.branchContains(TokenTypes.LITERAL_ELSE)+" else statement not in for loop");
 				// check when there is an if statement that there is no else statement - should not be similar to the guard method.
 				return !litif.branchContains(TokenTypes.LITERAL_ELSE);
 			}
@@ -235,7 +269,7 @@ public class SingleForLoopCheck extends Check {
 	private boolean checkReturn(DetailAST a)
 	{
 		String returnVar = a.findFirstToken(TokenTypes.LITERAL_RETURN).getFirstChild().getFirstChild().toString();
-		System.out.println(util.StringUtil.fixName(returnVar).equals(initLocalVar)+" for return");
+//		System.out.println(util.StringUtil.fixName(returnVar).equals(initLocalVar)+" for return");
 		return util.StringUtil.fixName(returnVar).equals(initLocalVar);
 	}
 	
@@ -289,12 +323,12 @@ public class SingleForLoopCheck extends Check {
 		{
 			String value = indexOp.findFirstToken(TokenTypes.EXPR).getFirstChild().toString();
 			String array = indexOp.findFirstToken(TokenTypes.IDENT).toString();
-			System.out.println(value);
-			System.out.println(array);
+//			System.out.println(value);
+//			System.out.println(array);
 			if (util.StringUtil.fixName(value).equals("0") && util.StringUtil.fixName(array).equals(aName))
 			{
 				initLocalVar = util.StringUtil.fixName(i.getFirstChild().findFirstToken(TokenTypes.IDENT).toString());
-				System.out.println(initLocalVar);
+//				System.out.println(initLocalVar);
 			}
 		}
 		
@@ -317,5 +351,10 @@ public class SingleForLoopCheck extends Check {
 	public void setArrayName(String aName)
 	{
 		this.aName = aName;
+	}
+	
+	public void setReportStyle(int a)
+	{
+		reportStyle = a;
 	}
 }
