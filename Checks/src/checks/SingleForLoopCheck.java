@@ -12,6 +12,7 @@ import com.puppycrawl.tools.checkstyle.api.*;
 public class SingleForLoopCheck extends Check {
 	
 	private String[]	mName;
+	private String		aName;
 	
 	/**
 	 * Return integer array of unique Token Types to visit
@@ -89,9 +90,9 @@ public class SingleForLoopCheck extends Check {
 			log(a.getLineNo(), "Err_SFL_For ''"+m+"'' does not use for loop");
 		
 		if (fc)
-			log(a.getLineNo(), "Suc_SFL_For ''"+m+"'' uses length of array as looping condition");
+			log(a.getLineNo(), "Suc_SFL_For ''"+m+"'' uses length of "+aName+" as looping condition");
 		else
-			log(a.getLineNo(), "Err_SFL_For ''"+m+"'' does not use length of array as looping condition");
+			log(a.getLineNo(), "Err_SFL_For ''"+m+"'' does not use length of "+aName+" as looping condition");
 		
 		
 		// TODO add other booleans in as conditions are created
@@ -114,12 +115,32 @@ public class SingleForLoopCheck extends Check {
 	
 	/**
 	 * Check the literal for AST has a looping condition based on the length of the array
-	 * @param a the literal for AST
-	 * @return true if the looping condition is based on length, false otherwise
+	 * @param a the literal For AST
+	 * @return true if the looping condition is based on length, false otherwise. False implies the use of a hard coded value.
 	 */
 	public boolean checkForCondition(DetailAST a)
 	{
-		return a.branchContains(TokenTypes.DOT);
+		// When an array name is not specified - simply check the existence of a dot type
+		if (aName == null)
+		{
+			return a.findFirstToken(TokenTypes.FOR_CONDITION).branchContains(TokenTypes.DOT);
+		}
+		// Grab the for loop condition AST i.e. for ( a ; b ; c ) - the b portion
+		// If the for condition exists and contains the dot type representing some array.length
+		// check that the specified array variable matches the expected aName
+		DetailAST forCondition = a.findFirstToken(TokenTypes.FOR_CONDITION);
+		
+		if (forCondition != null && forCondition.branchContains(TokenTypes.DOT))
+		{
+			// Iterate down to the dot level of the for condition AST. For condition -> expr -> operator (i < x.length)
+			// TODO Neater way of doing this would be good - manual tree traversal always necessary???
+			DetailAST dot = forCondition.getFirstChild().getFirstChild().findFirstToken(TokenTypes.DOT);
+			if  (dot != null)
+			{
+				return util.StringUtil.fixName(dot.getFirstChild().toString()).equals(aName);
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -129,5 +150,14 @@ public class SingleForLoopCheck extends Check {
 	public void setMethodName(String[] mName)
 	{
 		this.mName = mName.clone();
+	}
+	
+	/**
+	 * Sets the array name property
+	 * @param aName string of the array name that is being processed
+	 */
+	public void setArrayName(String aName)
+	{
+		this.aName = aName;
 	}
 }
