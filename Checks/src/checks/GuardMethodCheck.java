@@ -92,7 +92,7 @@ public class GuardMethodCheck extends Check
 	 * @param mName method AST name
 	 * @return the if AST if it exists, null otherwise
 	 */
-	public DetailAST checkIf(DetailAST ast)
+	private DetailAST checkIf(DetailAST ast)
 	{		
 		return ast.findFirstToken(TokenTypes.LITERAL_IF);
 	}
@@ -103,7 +103,7 @@ public class GuardMethodCheck extends Check
 	 * @param ast the method AST to be checked
 	 * @param mName the method AST name
 	 */
-	public boolean checkElse(DetailAST ast)
+	private boolean checkElse(DetailAST ast)
 	{	
 		return ast.branchContains(TokenTypes.LITERAL_ELSE);
 	}
@@ -113,7 +113,7 @@ public class GuardMethodCheck extends Check
 	 * 
 	 * @param ast the method AST
 	 */
-	public boolean checkOutsideIf(DetailAST ast)
+	private boolean checkOutsideIf(DetailAST ast)
 	{
 		return ast.findFirstToken(TokenTypes.SLIST).getChildCount(TokenTypes.EXPR) > 0;
 	}
@@ -124,7 +124,7 @@ public class GuardMethodCheck extends Check
 	 * @param ast the method AST
 	 * @param ifAST the if AST
 	 */
-	public boolean checkGuardVar(DetailAST ifAST, String m)
+	private boolean checkGuardVar(DetailAST ifAST, String m)
 	{
 		/*
 		 *  Concept:
@@ -160,7 +160,7 @@ public class GuardMethodCheck extends Check
 	 * If the token is a guard variable set found to true.
 	 * @param ident the ident token to check
 	 */
-	public void checkIdent(DetailAST ident)
+	private void checkIdent(DetailAST ident)
 	{
 		String exprLeftVar = util.StringUtil.fixName(ident.toString());
 		for (int i = 0; i < guardVars.length; i++)
@@ -177,7 +177,7 @@ public class GuardMethodCheck extends Check
 	/**
 	 * Outputs Checkstyle log report on methods implementation of the Guard Method Check
 	 */
-	public void reportLog(DetailAST a, String m, boolean i, boolean e, boolean oi, boolean gv)
+	private void reportLog(DetailAST a, String m, boolean i, boolean e, boolean oi, boolean gv)
 	{
 		if (i)
 			log(a.getLineNo(), "Suc_GM_If ''"+m+"'' uses if statement");
@@ -213,7 +213,7 @@ public class GuardMethodCheck extends Check
 	 * @param a the AST to be traversed
 	 * @param type the token type to find in 'a'
 	 */
-	public void treeTraversal(DetailAST a, int type)
+	private void treeTraversal(DetailAST a, int type)
 	{
 		if (a == null)
 			return;
