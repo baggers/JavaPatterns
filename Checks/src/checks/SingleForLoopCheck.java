@@ -85,7 +85,7 @@ public class SingleForLoopCheck extends Check {
 //					System.out.println("condition "+fc);
 					fi	= checkForInit(forAST);
 //					System.out.println("init "+fi);
-					fif	= checkIf(forAST);
+					//fif	= checkIf(forAST);
 //					System.out.println("if "+fif);
 				}
 				
@@ -95,7 +95,6 @@ public class SingleForLoopCheck extends Check {
 					fr	= checkReturn(slist);
 //					System.out.println("return "+fr);
 				}
-								
 				reportLog(reportStyle, ast, methodName, f, fc, fi, fif, fr, lv);
 			}
 		}
@@ -120,9 +119,9 @@ public class SingleForLoopCheck extends Check {
 		case 0: System.out.println("Lecturer output summary style - TBD"); break;
 		case 1:
 			if (lv)
-				log(a.getLineNo(), "Suc_SFL_LocalVar ''"+m+"'' uses a local variable "+initLocalVar+" for calculation of the "+m);
+				log(a.getLineNo(), "Suc_SFL_LocalVar ''"+m+"'' uses a local variable for calculation of the "+m);
 			else
-				log(a.getLineNo(), "Err_SFL_LocalVar ''"+m+"'' does not uuses a local variable "+initLocalVar+" for calculation of the "+m);
+				log(a.getLineNo(), "Err_SFL_LocalVar ''"+m+"'' does not uuses a local variable for calculation of the "+m);
 		
 			if (f)
 				log(a.getLineNo(), "Suc_SFL_For ''"+m+"'' uses a for loop");
@@ -149,8 +148,8 @@ public class SingleForLoopCheck extends Check {
 			else
 				log(a.getLineNo(), "Err_SFL_Return ''"+m+"'' does not return the local variable "+m);
 			
-			// TODO add other booleans in as conditions are created
-			if (f && fc && fi && fif && lv && fr)
+			// NOTE: removed fif from this
+			if (f && fc && fi && lv && fr)
 				log(a.getLineNo(), "Suc_SFL_Pass ''"+m+"'' correctly implements the Single For Loop pattern");
 			else
 				log(a.getLineNo(), "Err_SFL_Fail ''"+m+"'' incorrectly implements the Single For Loop pattern");
@@ -211,8 +210,7 @@ public class SingleForLoopCheck extends Check {
 	 */
 	private boolean checkLocalVariable(DetailAST a)
 	{
-		treeTraversal(a, TokenTypes.EXPR);
-//		System.out.println(initLocalVar +" for local var");
+		treeTraversal(a, TokenTypes.INDEX_OP);
 		return !initLocalVar.equals(null);
 	}
 	
@@ -289,7 +287,8 @@ public class SingleForLoopCheck extends Check {
 		// Check if EXPR - if it is check for guard variable
 		if (a.getType() == type)
 		{
-			checkIdentAssign(a);
+			System.out.println("checking indexop " +a);
+			checkIndexOp(a);
 			return;
 		}
 		// Perform the recursive search
@@ -308,30 +307,87 @@ public class SingleForLoopCheck extends Check {
 		}
 	}
 	
+
 	/**
-	 * Determine if the parameter AST contains an index operation accessing the aName's 0th element.
-	 * If the AST contains an assignment for this 0th element - we have found the appropriate local variable
-	 * which is concerned with producing the tracking the max/min.
-	 * Set the private global variable initLocalVar to this string for use in other functions.
-	 * Search performs regardless of the type of assignment - just checks the use of the aName 0th element.
-	 * @param i the method statement list AST
+	 * 
+	 * @param indOp
 	 */
-	private void checkIdentAssign(DetailAST i)
+	private void checkIndexOp(DetailAST indOp)
 	{
-		DetailAST indexOp = i.getFirstChild().findFirstToken(TokenTypes.INDEX_OP);
-		if (indexOp != null)
+		// some dummy vars
+		String arrName="", val="", temp="";
+		
+		// check the correct index op on the array we are interested in
+		DetailAST array = indOp.findFirstToken(TokenTypes.IDENT);
+		if (array != null)
 		{
-			String value = indexOp.findFirstToken(TokenTypes.EXPR).getFirstChild().toString();
-			String array = indexOp.findFirstToken(TokenTypes.IDENT).toString();
-//			System.out.println(value);
-//			System.out.println(array);
-			if (util.StringUtil.fixName(value).equals("0") && util.StringUtil.fixName(array).equals(aName))
-			{
-				initLocalVar = util.StringUtil.fixName(i.getFirstChild().findFirstToken(TokenTypes.IDENT).toString());
-//				System.out.println(initLocalVar);
-			}
+//			System.out.println("check array");
+			arrName = util.StringUtil.fixName(array.toString());
 		}
 		
+		// check the value being assigned in the index op - preferably 0 but may be changed to suit or even removed(?)
+		DetailAST value = indOp.findFirstToken(TokenTypes.EXPR).getFirstChild();
+		if (value != null)
+		{
+//			System.out.println("check val");
+			val = util.StringUtil.fixName(value.toString());
+		}
+		
+		// check that the array name and value are valid to progress to finding the local variable name
+		if (!arrName.equals(aName) || !val.equals("0"))
+			return;
+		
+		// local variable shoudl exist, determine what form of variable declaration used
+		int pType = indOp.getParent().getType();
+
+		// determine the local variable identity, if possible
+		if (pType == TokenTypes.ASSIGN)
+		{
+//			System.out.println("Found assign styled variable index op");
+			temp = indOp.getParent().findFirstToken(TokenTypes.IDENT).toString();
+			initLocalVar = util.StringUtil.fixName(temp);
+//			System.out.println("Local var set to " +initLocalVar);
+		}
+		else if (pType == TokenTypes.EXPR)
+		{
+//			System.out.println("Found expr styled variable index op");
+			int check = indOp.getParent().getParent().getPreviousSibling().getType();
+//			System.out.println("got check type");
+			if (check == TokenTypes.IDENT)
+			{
+				initLocalVar = util.StringUtil.fixName(indOp.getParent().getParent().getPreviousSibling().toString());
+//				System.out.println("Local var set to " +initLocalVar);
+			}
+		}
+		else
+		{
+//			System.out.println("Something strange has occurred!");
+		}
+			
+//			
+//		//grab the index op AST
+//		System.out.println("attempting to find index op");
+//		//DetailAST indexOp = e.getFirstChild().findFirstToken(TokenTypes.INDEX_OP);
+//		DetailAST indexOp = indOp.findFirstToken(TokenTypes.INDEX_OP);
+//		
+//		System.out.println("indexOp = "+indexOp.toString());
+//			
+//		if (indexOp != null)
+//		{
+//			System.out.println("trying to get value/array/varname");
+//			// array[value] 
+//			String value = indexOp.findFirstToken(TokenTypes.EXPR).getFirstChild().toString();
+//			String array = indexOp.findFirstToken(TokenTypes.IDENT).toString();
+////			System.out.println(value);
+////			System.out.println(array);
+//			if (util.StringUtil.fixName(value).equals("0") && util.StringUtil.fixName(array).equals(aName))
+//			{
+//				//initLocalVar = util.StringUtil.fixName();
+////				System.out.println(initLocalVar);
+//			}
+//		}
+//		System.out.println(initLocalVar);
+//		
 	}
 	
 	
