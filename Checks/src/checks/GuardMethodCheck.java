@@ -113,9 +113,9 @@ public class GuardMethodCheck extends Check
 				log(a.getLineNo(), "Err_GM_GuardVar ''"+m+"'' does not guard specified variables");
 				
 			if (i && e && oi && gv)
-				log(a.getLineNo(), "Suc_GM_Pass ''"+m+"'' correctly implements Guard Method Pattern");
+				log(a.getLineNo(), "Complete_Pass ''"+m+"'' correctly implements Guard Method Pattern");
 			else
-				log(a.getLineNo(), "Err_GM_Fail ''"+m+"'' incorrectly implements Guard Method Pattern");
+				log(a.getLineNo(), "Incomplete_Pass ''"+m+"'' incorrectly implements Guard Method Pattern");
 			break;
 			default: System.out.println("Style undefined - please specify a reportStyle in the XML configuration file.\n" +
 					"0 - Lecturer summary output [Codes only]\n" +

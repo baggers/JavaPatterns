@@ -150,9 +150,9 @@ public class SingleForLoopCheck extends Check {
 			
 			// NOTE: removed fif from this
 			if (f && fc && fi && lv && fr)
-				log(a.getLineNo(), "Suc_SFL_Pass ''"+m+"'' correctly implements the Single For Loop pattern");
+				log(a.getLineNo(), "Complete_Pass ''"+m+"'' correctly implements the Single For Loop pattern");
 			else
-				log(a.getLineNo(), "Err_SFL_Fail ''"+m+"'' incorrectly implements the Single For Loop pattern");
+				log(a.getLineNo(), "Incomplete_Pass ''"+m+"'' incorrectly implements the Single For Loop pattern");
 			break;
 			
 		default: System.out.println("Style undefined - please specify a reportStyle in the XML configuration file.\n" +
