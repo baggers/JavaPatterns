@@ -1,0 +1,79 @@
+#!/bin/bash
+# Script to run checkstyle using custom checks on SUBDIR student submissions
+# Acknowledgement - Rachel Cardell-Oliver for providing initial script that has been adapted
+
+# Alex Bagini May, 2011
+
+# Student folder
+STU=$1    ; shift
+
+
+# Variables
+TESTDIR=/home/alex/Dropbox/Uni-2011/Honours/dev/src-test
+SUBDIR=/home/alex/student-code/Java1200-BankAccount-2011-1
+OUTDIR=/home/alex/output-bank-account
+
+PROG=BankAccount
+
+CHECKRULES=$TESTDIR/guardcheck
+CHECKSTYLE=$TESTDIR/checkstyle-5.3-all.jar
+CUSTOMRULES=$TESTDIR/update.jar
+
+#check student dir exists
+STUDIR=$SUBDIR/submissions/$STU
+if [ ! -d $STUDIR ] ; then
+    echo "Directory $STUDIR not found"
+    exit 1
+fi
+
+#check output dir exists
+if [ ! -d $OUTDIR ] ; then
+	echo "Creating $OUTDIR"
+	mkdir -m 777 $OUTDIR
+fi
+
+#check student output dir exists
+if [ ! -d $OUTDIR/$STU ] ; then
+	echo "Created dir $OUTDIR/$STU"
+	mkdir -m 777 $OUTDIR/$STU
+fi
+
+FEEDBACK=$OUTDIR/$STU/Feedback.txt
+SUMMARY=$OUTDIR/total-summary.txt
+FAILLIST=$OUTDIR/fail-list.txt
+EXCLIST=$OUTDIR/exc-list.txt
+
+echo "Marking $PROG for $STU at $(date +%Y-%m-%d" "%H:%M)" > $FEEDBACK #start a new feedback file
+
+cd $STUDIR
+
+#1. check file exists
+if [ ! -f $PROG.java ] ; then
+   echo "$PROG.java not found. Please check file name and resubmit"
+   exit 1
+else
+	echo "$PROG.java found"
+	echo "$PROG.java file submitted." >> $FEEDBACK
+fi
+
+
+#2. Run checkstyle tests with custom java pattern checks
+echo "Running Checkstyle with $CHECKRULES.xml configuration." >> $FEEDBACK
+java -classpath $CUSTOMRULES:$CHECKSTYLE com.puppycrawl.tools.checkstyle.Main -c $CHECKRULES.xml $PROG.java >> $SUMMARY	
+java -classpath $CUSTOMRULES:$CHECKSTYLE com.puppycrawl.tools.checkstyle.Main -c $CHECKRULES.xml $PROG.java >> $FEEDBACK
+echo "Checkstyle tests complete." >> $FEEDBACK
+
+#Debug output for list of students where checks did not work correctly or simply they failed the checks
+TEMP=`grep -c "Err_SFL_Fail" $FEEDBACK`
+TEMP2=`grep -c "Got an exception" $FEEDBACK`
+
+if [ $TEMP -gt 0 ] ; then
+	echo $STU >> $FAILLIST
+fi
+
+if [ $TEMP2 -gt 0 ] ; then
+	echo $STU >> $EXCLIST
+fi
+
+exit 0
+

@@ -1,0 +1,34 @@
+#!/bin/bash
+#
+# Generic script for collecting data on a set of submissions
+# Acknowledgement - Rachel Cardell-Oliver for initial script that has been adapted
+
+# Alex Bagini, August 2011
+
+#Location of student submissions
+SUBDIR=/home/alex/student-code/Java1200-BankAccount-2011-1/submissions
+#Location of bash scripts
+SCRIPTDIR=/home/alex/Dropbox/Uni-2011/Honours/dev/scripts/bank-account
+#Location of output directory
+OUTDIR=/home/alex/output-bank-account
+
+if [ -d $OUTDIR ] ; then
+	echo "Removing previous output directory"
+	rm -r $OUTDIR
+	mkdir -m 777 $OUTDIR
+fi
+
+cd $SUBDIR
+for i in *
+do
+  # for each student submissions perform checkstyle
+  if [ -d $i ]; then
+	echo "Marking $i"
+	bash $SCRIPTDIR/checkstyle-script-bank $i
+  fi
+done
+
+#Execute summary script
+bash $SCRIPTDIR/checkstyle-analyse-bank
+
+exit 0

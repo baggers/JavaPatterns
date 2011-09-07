@@ -1,0 +1,41 @@
+Checkstyle Notes
+
+HOWTO: Eclipse
+
+1. Create Java Project
+2. Add under particular package (if required)
+	To get rid of stupid red lines:
+		- Right click Project
+		- Build path
+		- Add external archives
+		- Select checkstyle-5.3-all.jar
+3. Create Java check classes
+4. Export package as jar file
+	To do:
+		- Right click package
+		- Export
+		- Runnable JAR file or JAR file
+		- Destination and name
+
+6. Add custom check to configuration file <module name="<package loc>.<java check name>"/>
+7. Run
+	java -classpath <your jar loc>:<checkstyle-5.3-all.jar loc> \
+	com.puppycrawl.tools.checkstyle.Main -c <config xml file> <java file>
+	
+Note: Use ':' in linux to seperate jars and ';' in Windows
+		
+
+
+
+
+TODO:
+1. Find out how to use classpath properly
+	set classpath=dir
+	javac *.java
+
+	I get an error.
+
+	javac -classpath dir *.java
+
+	Works.
+	Why?

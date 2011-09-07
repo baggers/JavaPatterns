@@ -1,0 +1,74 @@
+#!/bin/bash
+# Script to analyse Checkstyle output for all students
+# Alex Bagini May, 2011
+
+#Summary file of checkstyle run
+SUMFILE=/home/alex/output-bank-account/total-summary.txt
+
+#Output summary file
+OUTFILE=/home/alex/Bank-Account-Summary.txt
+if [ -f $OUTFILE ] ; then
+	rm $OUTFILE
+fi
+
+echo "-----------------------------------------------------------------" 	>> $OUTFILE
+echo "Summary - Guard Method Pattern" >> $OUTFILE
+echo "-----------------------------------------------------------------"	>> $OUTFILE
+
+echo >> $OUTFILE
+echo -n "Number of student submissions: " >> $OUTFILE	;						grep -c 'Audit done.' $SUMFILE >> $OUTFILE
+
+echo >> $OUTFILE
+echo >> $OUTFILE
+
+#DEPOSIT
+echo "_________________________________________________________________"	>> $OUTFILE
+echo "Deposit method summary" >>$OUTFILE
+
+echo -n $'\t'"If statement used: " >>$OUTFILE ; 								grep -c "Suc_GM_If 'deposit'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"If statement not used: " >>$OUTFILE ; 							grep -c "Err_GM_If 'deposit'" $SUMFILE >> $OUTFILE
+
+echo -n $'\t'"Else statement not used: ">>$OUTFILE ; 							grep -c "Suc_GM_Else 'deposit'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Else statement used: ">>$OUTFILE ; 								grep -c "Err_GM_Else 'deposit'" $SUMFILE >> $OUTFILE
+
+echo -n $'\t'"No expressions outside if statement block : " >>$OUTFILE ; 		grep -c "Suc_GM_Exprs 'deposit'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Expressions outside if statement block : " >>$OUTFILE ; 			grep -c "Err_GM_Exprs 'deposit'" $SUMFILE >> $OUTFILE
+
+echo -n $'\t'"All guard variables guarded by if statement block: " >>$OUTFILE ; grep -c "Suc_GM_GuardVar 'deposit'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Guard variables not guarded by if statement block: " >>$OUTFILE ; grep -c "Err_GM_GuardVar 'deposit'" $SUMFILE >> $OUTFILE
+
+echo "_________________________________________________________________"	>> $OUTFILE
+echo -n "Total Complete Passes: " >>$OUTFILE ;									grep -c "Complete_Pass 'deposit'" $SUMFILE >> $OUTFILE
+echo -n "Total Incomplete Passes: " >>$OUTFILE ;								grep -c "Incomplete_Pass 'deposit'" $SUMFILE >> $OUTFILE
+
+
+echo >> $OUTFILE
+echo >> $OUTFILE
+
+#WITHDRAW
+echo "_________________________________________________________________"	>> $OUTFILE
+echo "Withdraw method summary" >> $OUTFILE
+
+echo -n $'\t'"If statement used: " >>$OUTFILE ; 								grep -c "Suc_GM_If 'withdraw'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"If statement not used: " >>$OUTFILE ; 							grep -c "Err_GM_If 'withdraw'" $SUMFILE >> $OUTFILE
+
+echo -n $'\t'"Else statement not used: ">>$OUTFILE ; 							grep -c "Suc_GM_Else 'withdraw'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Else statement used: ">>$OUTFILE ; 								grep -c "Err_GM_Else 'withdraw'" $SUMFILE >> $OUTFILE
+
+echo -n $'\t'"No expressions outside if statement block : " >>$OUTFILE ; 		grep -c "Suc_GM_Exprs 'withdraw'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Expressions outside if statement block : " >>$OUTFILE ; 			grep -c "Err_GM_Exprs 'withdraw'" $SUMFILE >> $OUTFILE
+
+echo -n $'\t'"All guard variables guarded by if statement block: " >>$OUTFILE ; grep -c "Suc_GM_GuardVar 'withdraw'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Guard variables not guarded by if statement block: " >>$OUTFILE ; grep -c "Err_GM_GuardVar 'withdraw'" $SUMFILE >> $OUTFILE
+
+echo "_________________________________________________________________"	>> $OUTFILE
+echo -n "Total Complete Passes " >>$OUTFILE ;									grep -c "Complete_Pass 'withdraw" $SUMFILE >> $OUTFILE
+echo -n "Total Incomplete Passes: " >>$OUTFILE ;								grep -c "Incomplete_Pass 'withdraw'" $SUMFILE >> $OUTFILE
+
+
+echo >> $OUTFILE
+echo >> $OUTFILE
+
+#EXCEPTION THROWN
+echo -n "Student code that caused exceptions when run: " >> $OUTFILE	;			grep -c "Got an exception" $SUMFILE >> $OUTFILE
+echo >> $OUTFILE

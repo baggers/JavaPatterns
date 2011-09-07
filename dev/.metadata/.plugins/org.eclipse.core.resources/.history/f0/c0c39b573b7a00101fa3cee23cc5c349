@@ -1,0 +1,80 @@
+package checks;
+
+import com.puppycrawl.tools.checkstyle.api.*;
+
+public class GuardCheck extends Check
+{
+	private int count = 0;
+	private String mName;
+
+	/**
+	 * Return the tokens this check is interested in visiting
+	 */
+	@Override
+	public int[] getDefaultTokens()
+	{
+		System.out.println("getDefTokens: Guard check (method_def).");
+		int[] result = new int[]{TokenTypes.METHOD_DEF};
+		System.out.println("Num method def tokens: " + result.length);
+		return result;
+	}
+	
+	/**
+	 * Called to visit each of the default tokens returned
+	 * by getDefaultTokens
+	 * 
+	 * What to do at each METHOD DEF -> Find guard check code
+	 */
+	@Override
+	public void visitToken(DetailAST ast)
+	{
+		// Find the identity of the token being visited
+		String s = ast.findFirstToken(TokenTypes.IDENT).toString();
+		// Convert the identity to a readable method string
+		String methodName = s.substring(0, s.indexOf('['));
+		
+		
+		System.out.println("Method: " +methodName);
+		
+		// If the method name is the specified one to check - check it
+		if (this.mName.equals(methodName))
+		{	
+			// Check that the method contains the guard pattern
+			// First we look for a statement list
+			DetailAST list = ast.findFirstToken(TokenTypes.SLIST);
+			
+			if (list != null)
+			{
+				System.out.println("\tFound AST that contains statement list " + list);
+				//log(list.getLineNo(), "Found method ast that contains statement list - " + list);
+			
+				// process list (literal if) tree to find out if it is correct?
+				//log(list.getLineNo(), "child count of " + list + " is " + list.getChildCount());
+				
+				// if the statement list contains an if
+				if (list.branchContains(TokenTypes.LITERAL_IF))
+				{
+					System.out.println("\tFound if statement in " +methodName);
+				}
+				else
+				{
+					System.out.println("\tExpected if statement NOT found in " +methodName);
+				}
+				//log(list.getLineNo(), "tree string: " + list.toStringTree());
+				
+			}
+			else
+			{
+				System.out.println("\tNo statement list found.")
+			}
+				
+		}
+		count++;
+	}
+	
+	public void setMethodName(String mName)
+	{
+		this.mName = mName;
+	}
+
+}

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Puppy Crawl//DTD Check Configuration 1.3//EN"
+    "http://www.puppycrawl.com/dtds/configuration_1_3.dtd">
+<module name="Checker">
+  <module name="TreeWalker">
+
+	<!-- Check the deposit and withdraw methods -->
+	<module name="checks.GuardMethodCheck">
+		<property name="methodName" value="deposit, withdraw"/>
+		<property name="guardVariable" value="balance, maximumBalance"/>
+		<property name="reportStyle" value="1"/>
+	</module>
+  </module>
+</module>

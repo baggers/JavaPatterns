@@ -1,0 +1,35 @@
+#!/bin/bash
+#
+# Generic script for collecting data on a set of submissions
+# Acknowledgement - Rachel Cardell-Oliver for initial script that has been adapted
+
+# Alex Bagini, May 2011
+
+#Location of student submissions
+SUBDIR=/home/alex/student-code/WeatherRecord/submissions
+#Location of bash scripts
+SCRIPTDIR=/home/alex/Dropbox/Uni-2011/Honours/dev/scripts/weather
+#Location of output folder
+OUTDIR=/home/alex/output-weather
+
+if [ -d $OUTDIR ] ; then
+	echo "Removing previous output directory"
+	rm -r $OUTDIR
+	mkdir -m 777 $OUTDIR
+fi
+
+cd $SUBDIR
+for i in *
+do
+  # for each name in the student submissions run checkstyle
+  if [ -d $i ]; then
+	echo "Marking $i"
+	bash $SCRIPTDIR/checkstyle-script-weather $i
+  fi
+done
+
+#Execute summary script
+#TODO uncomment this when scripts working
+bash $SCRIPTDIR/checkstyle-analyse-weather
+
+exit 0

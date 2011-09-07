@@ -150,9 +150,9 @@ public class SingleForLoopCheck extends Check {
 			
 			// NOTE: removed fif from this
 			if (f && fc && fi && lv && fr)
-				log(a.getLineNo(), "Complete_Pass ''"+m+"'' correctly implements the Single For Loop pattern");
+				log(a.getLineNo(), " Complete_Pass ''"+m+"'' correctly implements the Single For Loop pattern");
 			else
-				log(a.getLineNo(), "Incomplete_Pass ''"+m+"'' incorrectly implements the Single For Loop pattern");
+				log(a.getLineNo(), " Incomplete_Pass ''"+m+"'' incorrectly implements the Single For Loop pattern");
 			break;
 			
 		default: System.out.println("Style undefined - please specify a reportStyle in the XML configuration file.\n" +
@@ -363,31 +363,6 @@ public class SingleForLoopCheck extends Check {
 		{
 //			System.out.println("Something strange has occurred!");
 		}
-			
-//			
-//		//grab the index op AST
-//		System.out.println("attempting to find index op");
-//		//DetailAST indexOp = e.getFirstChild().findFirstToken(TokenTypes.INDEX_OP);
-//		DetailAST indexOp = indOp.findFirstToken(TokenTypes.INDEX_OP);
-//		
-//		System.out.println("indexOp = "+indexOp.toString());
-//			
-//		if (indexOp != null)
-//		{
-//			System.out.println("trying to get value/array/varname");
-//			// array[value] 
-//			String value = indexOp.findFirstToken(TokenTypes.EXPR).getFirstChild().toString();
-//			String array = indexOp.findFirstToken(TokenTypes.IDENT).toString();
-////			System.out.println(value);
-////			System.out.println(array);
-//			if (util.StringUtil.fixName(value).equals("0") && util.StringUtil.fixName(array).equals(aName))
-//			{
-//				//initLocalVar = util.StringUtil.fixName();
-////				System.out.println(initLocalVar);
-//			}
-//		}
-//		System.out.println(initLocalVar);
-//		
 	}
 	
 	
