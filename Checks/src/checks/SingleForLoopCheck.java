@@ -14,6 +14,8 @@ public class SingleForLoopCheck extends Check {
 	private String[]	mName;
 	private String		aName, initLocalVar;
 	private int			reportStyle;
+	private boolean		LVassigned;
+	private DetailAST	forAST;
 	
 	/**
 	 * Return integer array of unique Token Types to visit
@@ -54,46 +56,68 @@ public class SingleForLoopCheck extends Check {
 		{
 			if (m.equals(methodName))
 			{
-				// Flags for the single for loop checks
-				boolean f = false, fc = false, fi = false, fif = false, fr = false, lv = false; // add more
+//				System.out.println("Entering a method");
 				
-				// Determine the statement list AST (contains the code for the method)
-				DetailAST slist = ast.findFirstToken(TokenTypes.SLIST);
+				// Flags for the single for loop checks
+				boolean f = false, fc = false, fi = false, fif = false, fr = false, lv = false;
+				initLocalVar = null;
+				
+				// Determine the method statement list AST (contains the code for the method)
+				DetailAST mSlist = ast.findFirstToken(TokenTypes.SLIST);
 				
 				// The method is very very wrong - it has nothing in it!?
-				if (slist == null)
+				if (mSlist == null)
 				{
 					System.out.println("No statement list found in " +methodName);
 					// Add log output?
 					continue;
 				}
 			
+//				System.out.println("Starting LV check");
+				
 				// check statement list AST for local variable max/min = aName[0]
-				lv = checkLocalVariable(slist);
-//				System.out.println("lvar "+lv);
-								
-				DetailAST forAST = checkFor(slist);
+				
+				
+				
+				
+				// check use of for loop in method ast
+				f = checkFor(mSlist);
+				
+				System.out.println(forAST);
+				
+				// local slist containing the for loop and other code
+				// NOTE This was required for students who may have encapsulated their method in an if statement - to check for an empty array
+				// it is out of scope for novices, however, this implementation remains functional for both instances.
+				DetailAST localSlist = forAST.getParent();
+				
 				// check for AST conditions:
-				// 1. for exists
-				// 2. for condition uses aName.length
-				// 3. for init begins at 1 rather than 0
-				// 4. if statement present to update local min/max
-				if (forAST != null)
+				// 1. for condition uses aName.length
+				// 2. for init begins at 1 rather than 0
+				// 3. if statement present to update local min/max
+				
+				System.out.println("check for loop params");
+				if (f)
 				{
-					f 	= true;
 					fc 	= checkForCondition(forAST);
-//					System.out.println("condition "+fc);
+					System.out.println("condition "+fc);
 					fi	= checkForInit(forAST);
-//					System.out.println("init "+fi);
-					//fif	= checkIf(forAST);
-//					System.out.println("if "+fif);
+					System.out.println("init "+fi);
 				}
 				
-				// if a local variable has been initialised inside the method - check it is returned correctly
+				
+				// check existence of a local variable in the local slist
+				lv = checkLocalVariable(localSlist);
+				
+				// if a local variable has been initialised inside the method
+				// - check the local variable is updated/assigned inside the for loop
+				// - check the local variable is returned
 				if (lv)
 				{
-					fr	= checkReturn(slist);
+					fr	= checkReturn(localSlist);
 //					System.out.println("return "+fr);
+					fif	= checkLVAssignment(forAST);
+//					System.out.println("if "+fif);
+
 				}
 				reportLog(reportStyle, ast, methodName, f, fc, fi, fif, fr, lv);
 			}
@@ -110,10 +134,10 @@ public class SingleForLoopCheck extends Check {
 	 * @param f boolean for loop present
 	 * @param fc boolean for loop condition uses aName.length
 	 * @param fi boolean for loop initialisation starts at 1
-	 * @param fif boolean for loop contains if statement for updating local variables
+	 * @param flv boolean for loop contains if statement for updating local variables
 	 * @param lv boolean local variables present outside for loop (e.g. local max/min)
 	 */
-	public void reportLog(int style, DetailAST a, String m, boolean f, boolean fc, boolean fi, boolean fif, boolean fr, boolean lv)
+	public void reportLog(int style, DetailAST a, String m, boolean f, boolean fc, boolean fi, boolean flv, boolean fr, boolean lv)
 	{
 		switch(style) {
 		case 0: System.out.println("Lecturer output summary style - TBD"); break;
@@ -121,7 +145,7 @@ public class SingleForLoopCheck extends Check {
 			if (lv)
 				log(a.getLineNo(), "Suc_SFL_LocalVar ''"+m+"'' uses a local variable for calculation of the "+m);
 			else
-				log(a.getLineNo(), "Err_SFL_LocalVar ''"+m+"'' does not uuses a local variable for calculation of the "+m);
+				log(a.getLineNo(), "Err_SFL_LocalVar ''"+m+"'' does not use a local variable for calculation of the "+m);
 		
 			if (f)
 				log(a.getLineNo(), "Suc_SFL_For ''"+m+"'' uses a for loop");
@@ -138,18 +162,19 @@ public class SingleForLoopCheck extends Check {
 			else
 				log(a.getLineNo(), "Err_SFL_ForInit ''"+m+"'' does not initiliase for loop init with 2nd element in ''"+aName+"''");
 			
-			if (fif)
-				log(a.getLineNo(), "Suc_SFL_ForIf ''"+m+"'' uses an if statement inside the for loop");
+			if (flv)
+				log(a.getLineNo(), "Suc_SFL_ForLV ''"+m+"'' assigns/updates the local variable value inside the for loop");
 			else
-				log(a.getLineNo(), "Err_SFL_ForIf ''"+m+"'' does not use an if statement inside the for loop or includes a redundant else statement");
+				log(a.getLineNo(), "Err_SFL_ForLV ''"+m+"'' does not assign/update the local variable value inside the for loop");
 			
 			if (fr)
 				log(a.getLineNo(), "Suc_SFL_Return ''"+m+"'' returns the local variable "+m);
 			else
 				log(a.getLineNo(), "Err_SFL_Return ''"+m+"'' does not return the local variable "+m);
 			
-			// NOTE: removed fif from this
-			if (f && fc && fi && lv && fr)
+
+			// Pass
+			if (f && fc && fi && flv && lv && fr)
 				log(a.getLineNo(), " Complete_Pass ''"+m+"'' correctly implements the Single For Loop pattern");
 			else
 				log(a.getLineNo(), " Incomplete_Pass ''"+m+"'' incorrectly implements the Single For Loop pattern");
@@ -161,15 +186,25 @@ public class SingleForLoopCheck extends Check {
 		}
 	}
 	
+
 	/**
-	 * Check the method slist AST for presence of a required for loop
-	 * @param a the method's slist AST
-	 * @param m the method name
-	 * @return the DetailAST of the found for loop, else null
+	 * Check for the instance of a for loop within the method statement list
+	 * @param a the method statement list
+	 * @return
 	 */
-	private DetailAST checkFor(DetailAST a)
+	private boolean checkFor(DetailAST a)
 	{	
-		return a.findFirstToken(TokenTypes.LITERAL_FOR);
+		forAST = null;
+		if(a.branchContains(TokenTypes.LITERAL_FOR))
+		{
+			System.out.println("Found literal for in branch");
+			// traverse the method AST to find the for AST and set it to the private global variable
+			// global var used as treetraversal returns void
+			dfs(a, TokenTypes.LITERAL_FOR, 2);
+//			System.out.println("tree traversal done");
+			return forAST != null;			
+		}
+		return false;
 	}
 	
 	/**
@@ -179,7 +214,7 @@ public class SingleForLoopCheck extends Check {
 	 */
 	private boolean checkForCondition(DetailAST a)
 	{
-		// When an array name is not specified - simply check the existence of a dot type
+		// When an array name is not specified - simply check the existence of a dot type for the array
 		if (aName == null)
 		{
 			return a.findFirstToken(TokenTypes.FOR_CONDITION).branchContains(TokenTypes.DOT);
@@ -192,9 +227,8 @@ public class SingleForLoopCheck extends Check {
 		if (forCondition != null && forCondition.branchContains(TokenTypes.DOT))
 		{
 			// Iterate down to the dot level of the for condition AST. For condition -> expr -> operator (i < x.length)
-			// TODO Neater way of doing this would be good - manual tree traversal always necessary???
 			DetailAST dot = forCondition.getFirstChild().getFirstChild().findFirstToken(TokenTypes.DOT);
-			if  (dot != null)
+			if (dot != null)
 			{
 				//dot AST's first child is the Ident variable aName
 				return util.StringUtil.fixName(dot.getFirstChild().toString()).equals(aName);
@@ -210,8 +244,9 @@ public class SingleForLoopCheck extends Check {
 	 */
 	private boolean checkLocalVariable(DetailAST a)
 	{
-		treeTraversal(a, TokenTypes.INDEX_OP);
-		return !initLocalVar.equals(null);
+//		System.out.println("checkLV method");
+		dfs(a, TokenTypes.INDEX_OP, 0);
+		return initLocalVar != null;
 	}
 	
 	/**
@@ -236,36 +271,31 @@ public class SingleForLoopCheck extends Check {
 	}
 
 	/**
-	 * To update the min/max variable using an if statement comparing the current min/max and array element
+	 * To update the min/max variable using an assignment inside the for loop
 	 * @param a the for literal AST
 	 * @return true, if the for loop contains an if statement to perform an update on the local variable min/max etc. False otherwise.
 	 */
-	private boolean checkIf(DetailAST a)
+	private boolean checkLVAssignment(DetailAST a)
 	{
+		LVassigned = false;
 		DetailAST fslist = a.findFirstToken(TokenTypes.SLIST);
 		if (fslist != null)
 		{
-//			System.out.println("Found if statement inside for loop");
-			//TODO extend this to check for the local variables when decided upon how to implement
-
-			DetailAST litif = fslist.findFirstToken(TokenTypes.LITERAL_IF);
-			if (litif != null)
-			{
-//				System.out.println(!litif.branchContains(TokenTypes.LITERAL_ELSE)+" else statement not in for loop");
-				// check when there is an if statement that there is no else statement - should not be similar to the guard method.
-				return !litif.branchContains(TokenTypes.LITERAL_ELSE);
-			}
+			//check if the LV is being accessed/updated inside the for loop
+			dfs(a, TokenTypes.IDENT, 1);
+			return LVassigned;
 		}
 		return false;
 	}
 	
 	/**
 	 * Check correct return of the initLocalVar value outside the if statement and for loop.
-	 * @param a
-	 * @return
+	 * @param a the local statement list AST
+	 * @return true if the return statement, returns the discovered local variable
 	 */
 	private boolean checkReturn(DetailAST a)
 	{
+		// Manual traveral of the statement list to find the return statement and check what is being returned - should be the local variable
 		String returnVar = a.findFirstToken(TokenTypes.LITERAL_RETURN).getFirstChild().getFirstChild().toString();
 //		System.out.println(util.StringUtil.fixName(returnVar).equals(initLocalVar)+" for return");
 		return util.StringUtil.fixName(returnVar).equals(initLocalVar);
@@ -280,15 +310,21 @@ public class SingleForLoopCheck extends Check {
 	 * @param a the AST to be traversed
 	 * @param type the token type to find in 'a'
 	 */
-	private void treeTraversal(DetailAST a, int type)
+	private void dfs(DetailAST a, int type, int method)
 	{
 		if (a == null)
+		{
 			return;
+		}
 		// Check if EXPR - if it is check for guard variable
 		if (a.getType() == type)
 		{
-			System.out.println("checking indexop " +a);
-			checkIndexOp(a);
+			// Determines the method to apply to the found AST match
+			switch (method) {
+			case 0: checkIndexOp(a); break;
+			case 1: checkLV(a); break;
+			case 2: forAST = a; break;
+			}
 			return;
 		}
 		// Perform the recursive search
@@ -300,7 +336,7 @@ public class SingleForLoopCheck extends Check {
 		
 		while(true)
 		{
-			treeTraversal(currentTree, type);
+			dfs(currentTree, type, method);
 			currentTree	= currentTree.getNextSibling();
 			if (currentTree == null)
 				return;
@@ -346,7 +382,7 @@ public class SingleForLoopCheck extends Check {
 //			System.out.println("Found assign styled variable index op");
 			temp = indOp.getParent().findFirstToken(TokenTypes.IDENT).toString();
 			initLocalVar = util.StringUtil.fixName(temp);
-//			System.out.println("Local var set to " +initLocalVar);
+			System.out.println("Local var set to " +initLocalVar);
 		}
 		else if (pType == TokenTypes.EXPR)
 		{
@@ -363,6 +399,44 @@ public class SingleForLoopCheck extends Check {
 		{
 //			System.out.println("Something strange has occurred!");
 		}
+	}
+	
+	/**
+	 * checks the assignment or use of the the local variable inside the for loop
+	 * @param i AST that represents an identity
+	 */
+	private void checkLV(DetailAST i)
+	{
+		String iName = i.toString();
+		if (util.StringUtil.fixName(iName).equals(initLocalVar))
+		{
+			LVassigned = checkParentofLV(i);
+		}
+	}
+	
+	/**
+	 * Checks the parent of the identity token - this is used to check how the local variable is updated in the for loop
+	 * @param i the identity AST
+	 * @return true, if the Local variable parent matches at least one of the expected update types (i.e. <, >, =). false otherwise.
+	 */
+	private boolean checkParentofLV(DetailAST i)
+	{
+		boolean result = false;
+		// get parent of the identity
+		int parent = i.getParent().getType();
+		
+		// the types to check over
+		// idea to make this flexible as possible - simply change these types and it will check them against the parent
+		int[] types = {TokenTypes.ASSIGN, TokenTypes.GT, TokenTypes.LT};
+		
+		// OR all the types against the parent type - if there is at least one it will be set to true
+		for(int t: types)
+		{
+			result = result || (parent == t);
+		}
+		
+		return result;
+		
 	}
 	
 	

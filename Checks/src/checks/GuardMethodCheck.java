@@ -180,7 +180,7 @@ public class GuardMethodCheck extends Check
 			
 		// if statement list
 		DetailAST ifSlist 	= ifAST.findFirstToken(TokenTypes.SLIST);
-		treeTraversal(ifSlist, TokenTypes.EXPR);
+		dfs(ifSlist, TokenTypes.EXPR);
 		
 		boolean foundAllGV	= true;
 		
@@ -223,7 +223,7 @@ public class GuardMethodCheck extends Check
 	 * @param a the AST to be traversed
 	 * @param type the token type to find in 'a'
 	 */
-	private void treeTraversal(DetailAST a, int type)
+	private void dfs(DetailAST a, int type)
 	{
 		if (a == null)
 			return;
@@ -245,7 +245,7 @@ public class GuardMethodCheck extends Check
 		
 		while(true)
 		{
-			treeTraversal(currentTree, type);
+			dfs(currentTree, type);
 			currentTree	= currentTree.getNextSibling();
 			if (currentTree == null)
 				return;
