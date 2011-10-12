@@ -42,6 +42,7 @@ FEEDBACK=$OUTDIR/$STU/Feedback.txt
 SUMMARY=$OUTDIR/total-summary.txt
 FAILLIST=$OUTDIR/fail-list.txt
 EXCLIST=$OUTDIR/exc-list.txt
+MATRIX=/home/alex/Bank-Account-Matrix.txt
 
 echo "Marking $PROG for $STU at $(date +%Y-%m-%d" "%H:%M)" > $FEEDBACK #start a new feedback file
 
@@ -74,6 +75,95 @@ fi
 if [ $TEMP2 -gt 0 ] ; then
 	echo $STU >> $EXCLIST
 fi
+
+#Add student to summary matrix
+#For each of the checks for this particular student we need to grep the count if count -gt 0, Y or N
+
+#Deposit
+PD=`grep -c "Complete_Pass 'deposit'" $FEEDBACK`
+IFD=`grep -c "Suc_GM_If 'deposit'" $FEEDBACK`
+ELSED=`grep -c "Suc_GM_Else 'deposit'" $FEEDBACK`
+EXPRD=`grep -c "Suc_GM_Exprs 'deposit'" $FEEDBACK`
+GVD=`grep -c "Suc_GM_GuardVar 'deposit'" $FEEDBACK`
+
+echo -n $STU >>$MATRIX
+
+LEN=`expr length "$STU"`
+
+#extra tab for short names to align correctly
+if [ $LEN -lt 8 ] ; then
+	echo -ne "\t" >>$MATRIX
+fi
+
+if [ $PD -gt 0 ] ; then
+	echo -ne "\t |Y" >> $MATRIX
+else
+	echo -ne "\t |N" >> $MATRIX
+fi
+
+if [ $IFD -gt 0 ] ; then
+	echo -ne "\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t N" >> $MATRIX
+fi
+
+if [ $ELSED -gt 0 ] ; then
+	echo -ne "\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t N" >> $MATRIX
+fi
+
+if [ $EXPRD -gt 0 ] ; then
+	echo -ne "\t\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t\t N" >> $MATRIX
+fi
+
+if [ $GVD -gt 0 ] ; then
+	echo -ne "\t\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t\t N" >> $MATRIX
+fi
+
+#Withdraw
+PW=`grep -c "Complete_Pass 'withdraw'" $FEEDBACK`
+IFW=`grep -c "Suc_GM_If 'withdraw'" $FEEDBACK`
+ELSEW=`grep -c "Suc_GM_Else 'withdraw'" $FEEDBACK`
+EXPRW=`grep -c "Suc_GM_Exprs 'withdraw'" $FEEDBACK`
+GVW=`grep -c "Suc_GM_GuardVar 'withdraw'" $FEEDBACK`
+
+if [ $PW -gt 0 ] ; then
+	echo -ne "\t\t\t\t|Y" >> $MATRIX
+else
+	echo -ne "\t\t\t\t|N" >> $MATRIX
+fi
+
+
+if [ $IFW -gt 0 ] ; then
+	echo -ne "\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t N" >> $MATRIX
+fi
+
+if [ $ELSEW -gt 0 ] ; then
+	echo -ne "\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t N" >> $MATRIX
+fi
+
+if [ $EXPRW -gt 0 ] ; then
+	echo -ne "\t\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t\t N" >> $MATRIX
+fi
+
+if [ $GVW -gt 0 ] ; then
+	echo -e "\t\t\t Y" >> $MATRIX
+else
+	echo -e "\t\t\t N" >> $MATRIX
+fi
+
+
 
 exit 0
 

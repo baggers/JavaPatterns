@@ -49,6 +49,7 @@ FEEDBACK=$OUTDIR/$STU/Feedback.txt
 SUMMARY=$OUTDIR/total-summary.txt
 FAILLIST=$OUTDIR/fail-list.txt
 EXCLIST=$OUTDIR/exc-list.txt
+MATRIX=/home/alex/Weather-Matrix.txt
 
 echo "Marking $PROG for $STU at $(date +%Y-%m-%d" "%H:%M)" > $FEEDBACK #start a new feedback file
 
@@ -86,6 +87,125 @@ if [ $TEMP2 -gt 0 ] ; then
 fi
 
 echo "Checkstyle test complete." >> $FEEDBACK
+
+
+#Add check results to matrix
+
+
+#Maximum
+FM=`grep -c "Suc_SFL_For 'maximum'" $FEEDBACK`
+FIM=`grep -c "Suc_SFL_ForInit 'maximum'" $FEEDBACK`
+FCM=`grep -c "Suc_SFL_ForCond 'maximum'" $FEEDBACK`
+LVM=`grep -c "Suc_SFL_LocalVar 'maximum'" $FEEDBACK`
+FLV=`grep -c "Suc_SFL_ForLV 'maximum'" $FEEDBACK`
+RM=`grep -c "Suc_SFL_Return 'maximum'" $FEEDBACK`
+PM=`grep -c "Complete_Pass 'maximum'" $FEEDBACK`
+
+echo -n $STU >>$MATRIX
+
+LEN=`expr length "$STU"`
+
+#extra tab for short names to align correctly
+if [ $LEN -lt 8 ] ; then
+	echo -ne "\t" >>$MATRIX
+fi
+
+if [ $PM -gt 0 ] ; then
+	echo -ne "\t |Y" >> $MATRIX
+else
+	echo -ne "\t |N" >> $MATRIX
+fi
+
+if [ $FM -gt 0 ] ; then
+	echo -ne "\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t N" >> $MATRIX
+fi
+
+if [ $FIM -gt 0 ] ; then
+	echo -ne "\t\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t\t N" >> $MATRIX
+fi
+
+if [ $FCM -gt 0 ] ; then
+	echo -ne "\t\t\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t\t\t N" >> $MATRIX
+fi
+
+if [ $LVM -gt 0 ] ; then
+	echo -ne "\t\t\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t\t\t N" >> $MATRIX
+fi
+
+if [ $FLV -gt 0 ] ; then
+	echo -ne "\t\t\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t\t\t N" >> $MATRIX
+fi
+
+if [ $RM -gt 0 ] ; then
+	echo -ne "\t\t\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t\t\t N" >> $MATRIX
+fi
+
+#Minimum
+FMi=`grep -c "Suc_SFL_For 'minimum'" $FEEDBACK`
+FIMi=`grep -c "Suc_SFL_ForInit 'minimum'" $FEEDBACK`
+FCMi=`grep -c "Suc_SFL_ForCond 'minimum'" $FEEDBACK`
+LVMi=`grep -c "Suc_SFL_LocalVar 'minimum'" $FEEDBACK`
+FLVi=`grep -c "Suc_SFL_ForLV 'minimum'" $FEEDBACK`
+RMi=`grep -c "Suc_SFL_Return 'minimum'" $FEEDBACK`
+PMi=`grep -c "Complete_Pass 'minimum'" $FEEDBACK`
+
+
+if [ $PMi -gt 0 ] ; then
+	echo -ne "\t\t\t\t|Y" >> $MATRIX
+else
+	echo -ne "\t\t\t\t|N" >> $MATRIX
+fi
+
+
+if [ $FMi -gt 0 ] ; then
+	echo -ne "\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t N" >> $MATRIX
+fi
+
+if [ $FIMi -gt 0 ] ; then
+	echo -ne "\t\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t\t N" >> $MATRIX
+fi
+
+if [ $FCMi -gt 0 ] ; then
+	echo -ne "\t\t\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t\t\t N" >> $MATRIX
+fi
+
+if [ $LVMi -gt 0 ] ; then
+	echo -ne "\t\t\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t\t\t N" >> $MATRIX
+fi
+
+if [ $FLVi -gt 0 ] ; then
+	echo -ne "\t\t\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t\t\t N" >> $MATRIX
+fi
+
+if [ $RMi -gt 0 ] ; then
+	echo -e "\t\t\t\t Y" >> $MATRIX
+else
+	echo -e "\t\t\t\t N" >> $MATRIX
+fi
+
+
 
 exit 0
 

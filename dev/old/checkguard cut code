@@ -1,0 +1,72 @@
+		
+		/*
+		 * Here have the if statement list - need to count at least one instance of the guard var inside here
+		 * Then need to check that there is no instance of it outside the if statement (i.e. count inside = count outside)
+		 */
+		
+		// Need to check each EXPR in the ifSlist to find a guard var as the first token
+		// from EXPR we know next will be some sort of assign (child) then we look for first IDENT token and compare
+		
+		
+		// See how many expressions in the SLIST so we know how many EXPRs to check for the guard var
+		
+		// getChildCount only does direct children - need to find ALL
+		
+		
+//		ifAST.findAll(TokenTypes.EXPR);
+//		System.out.println("\tnumber of expr in if: " +numIfExpr);
+//		
+//		int numExpr		= ast.getChildCount(TokenTypes.EXPR);
+//		System.out.println("\tnumber of expr: " +numExpr);
+//		
+//		if (numIfExpr != numExpr)
+//		{
+//			System.out.println("\tExpressions outside if statement present.\tFAIL");
+//			log(ast.getLineNo(), "Guard pattern incorrectly implemented in ''" +mName+ "''. Expressions present outside if statement.");
+//		}
+		
+		
+		
+		
+/*		//Bad assumption that first ident come across is the actual guard var
+		//TODO find out how to traverse to OTHER exprs in the tree
+		DetailAST ifIdent = ifSlist.findFirstToken(TokenTypes.EXPR).getFirstChild().findFirstToken(TokenTypes.IDENT);
+								
+		// This is the ident token found in the expr
+		// Need to ensure this is not used elsewhere in the method def token
+		String var = util.StringUtil.fixName(ifIdent.toString());
+		System.out.println("\tInside if statement found ident token: "+var+"\n\tMust check number of occurences of this ident in method.");
+		
+		ASTEnumeration varTree = ast.findAll(ifIdent);
+		int countTotal 	= 0;
+		int count		= 0;
+		
+		// count the instances of the var in the whole method
+		while (varTree.hasMoreNodes())
+		{
+			countTotal++;
+			varTree.nextNode();
+		}
+		
+		System.out.println("\tTotal count of "+var+" is "+countTotal);
+		
+		// count instances of the var in the if statement list
+		// NOTE: not working as intended - does not just traverse ifList ast
+		ASTEnumeration test = ifSlist.findAll(ifIdent);
+		while (test.hasMoreNodes())
+		{
+			count++;
+			test.nextNode();
+		}
+		
+		System.out.println("\tCount of "+var+" in if block is "+count);
+		
+		// Check that only 1 instance of the variable is used in the method - WRONG ASSUMPTION
+		// TODO correct assumption for the use of the var inside the if statement (limit or how to check 'outside' the if statement)
+		if (count != countTotal)
+		{
+			System.out.println("\tTotal count of " +var+" does not equal the count in the if statement list." +
+					"\n\tThere should be no other occurences.");
+		}
+
+//****************************************************************************************************/

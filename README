@@ -1,0 +1,31 @@
+Alex Bagini - 20350167
+University of Western Australia
+2011
+
+The Checks folder contains the Checkstyle custom rules implemented in Java.
+
+Checks/src/checks/
+	- GuardMethodPattern.java
+	- IdempotentPattern.java
+	- SingleForLoopPattern.java
+
+
+-----
+
+The dev folder contains:
+1. a copy of checkstyle-5.3
+2. old code that has since been removed/replaced	
+3. bash scripts to run Checkstyle
+4. test directory
+
+-----
+
+3. The scripts are seperated into 3 folders based on the custom rules run on student submissions
+	- bank account (guard method pattern)
+	- idem (idempotent pattern on bank account submissions)
+	- weather record (single for loop pattern)
+
+4. The test directory contains Java files that were used for testing the custom Checkstyle rules
+	- folders contain simple Java files related to each rule
+	- JAR files that contain the custom rules to be run with Checkstyle
+	- XML files to specify the integration of the custom rules

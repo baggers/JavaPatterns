@@ -1,0 +1,31 @@
+#!/bin/bash
+# Script to analyse Checkstyle output for all students
+# Alex Bagini May, 2011
+
+#Summary file of checkstyle run
+SUMFILE=/home/alex/output-idem/total-summary.txt
+
+#Output summary file
+OUTFILE=/home/alex/idem-Summary.txt
+if [ -f $OUTFILE ] ; then
+	rm $OUTFILE
+fi
+
+echo "-----------------------------------------------------------------" 	>> $OUTFILE
+echo "Summary - Idempotent Pattern" >> $OUTFILE
+echo "-----------------------------------------------------------------"	>> $OUTFILE
+
+echo >> $OUTFILE
+echo -n "Number of student submissions: " >> $OUTFILE	;						grep -c 'Audit done.' $SUMFILE >> $OUTFILE
+
+echo >> $OUTFILE
+echo >> $OUTFILE
+
+echo -n "Number of idempotent assignments identified: " >> $OUTFILE ; 			grep -c 'Identified assignment' $SUMFILE >> $OUTFILE
+
+echo >> $OUTFILE
+echo >> $OUTFILE
+
+#EXCEPTION THROWN
+echo -n "Student code that caused exceptions when run: " >> $OUTFILE	;			grep -c "Got an exception" $SUMFILE >> $OUTFILE
+echo >> $OUTFILE

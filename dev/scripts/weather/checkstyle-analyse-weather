@@ -44,8 +44,11 @@ echo -n $'\t'"Does not use length as part of loop condition: " >>$OUTFILE ; 	gre
 echo -n $'\t'"Uses local variable for storing current max: " >>$OUTFILE ; 		grep -c "Suc_SFL_LocalVar 'maximum'" $SUMFILE >> $OUTFILE
 echo -n $'\t'"Does not use local var for storing current max: " >>$OUTFILE ;	grep -c "Err_SFL_LocalVar 'maximum'" $SUMFILE >> $OUTFILE
 
+echo -n $'\t'"Updates the local variable value inside the for loop: " >>$OUTFILE ; 	grep -c "Suc_SFL_ForLV 'maximum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not update the local variable value in the for loop: " >>$OUTFILE ;	grep -c "Err_SFL_ForLV 'maximum'" $SUMFILE >> $OUTFILE
+
 echo -n $'\t'"Returns the local variable max: " >>$OUTFILE ; 					grep -c "Suc_SFL_Return 'maximum'" $SUMFILE >> $OUTFILE
-echo -n $'\t'"Does not return the local var max: " >>$OUTFILE ;						grep -c "Err_SFL_Return 'maximum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not return the local var max: " >>$OUTFILE ;					grep -c "Err_SFL_Return 'maximum'" $SUMFILE >> $OUTFILE
 
 #if statement
 
@@ -72,8 +75,11 @@ echo -n $'\t'"Does not use length as part of loop condition: " >>$OUTFILE ; 	gre
 echo -n $'\t'"Uses local variable for storing current min: " >>$OUTFILE ; 		grep -c "Suc_SFL_LocalVar 'minimum'" $SUMFILE >> $OUTFILE
 echo -n $'\t'"Does not use local var for storing current min: " >>$OUTFILE ;	grep -c "Err_SFL_LocalVar 'minimum'" $SUMFILE >> $OUTFILE
 
+echo -n $'\t'"Updates the local variable value inside the for loop: " >>$OUTFILE ; 	grep -c "Suc_SFL_ForLV 'minimum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not update the local variable value in the for loop: " >>$OUTFILE ;	grep -c "Err_SFL_ForLV 'minimum'" $SUMFILE >> $OUTFILE
+
 echo -n $'\t'"Returns the local variable min: " >>$OUTFILE ; 					grep -c "Suc_SFL_Return 'minimum'" $SUMFILE >> $OUTFILE
-echo -n $'\t'"Does not return the local var min: " >>$OUTFILE ;						grep -c "Err_SFL_Return 'minimum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not return the local var min: " >>$OUTFILE ;					grep -c "Err_SFL_Return 'minimum'" $SUMFILE >> $OUTFILE
 
 #if statement
 echo "_________________________________________________________________"	>> $OUTFILE

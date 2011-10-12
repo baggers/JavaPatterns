@@ -1,0 +1,39 @@
+				
+//				
+//				// Check that the method contains the guard pattern
+//				// First we look for a statement list
+//				DetailAST list = ast.findFirstToken(TokenTypes.SLIST);
+//				
+//				/* Now need to check that the statement list complies with the guard pattern
+//				 *  - check if statement present
+//				 *  - check no else statement
+//				 *  - check variable used in the check is not used elsewhere in the method (?)
+//				 */
+//				if (list != null)
+//				{
+//					if (!list.branchContains(TokenTypes.LITERAL_IF))
+//					{
+//						System.out.println("\tExpected if statement NOT found.\tFAIL");
+//						log(list.getLineNo(), "Guard pattern not present in '" +methodName+ "' method.");
+//					}
+//					else
+//					{
+//						
+//						// Check no else component
+//						if (!list.findFirstToken(TokenTypes.LITERAL_IF).branchContains(TokenTypes.LITERAL_ELSE))
+//						{
+//							// Guard pattern present
+//							System.out.println("\tGuard pattern found.\t\t\tPASS");
+//						}
+//						else
+//						{
+//							// Else found which should not be present in guard pattern
+//							log(list.getLineNo(), "Guard pattern incorrectly implemented in ''" +methodName+ "''. Else statement present.");
+//						}
+//					}
+//				}
+//				else
+//				{
+//					System.out.println("\tNo statement list found - method is strange =S.");
+//				}		
+//			}

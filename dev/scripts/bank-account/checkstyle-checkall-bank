@@ -12,6 +12,18 @@ SCRIPTDIR=/home/alex/Dropbox/Uni-2011/Honours/dev/scripts/bank-account
 #Location of output directory
 OUTDIR=/home/alex/output-bank-account
 
+MATRIX=/home/alex/Bank-Account-Matrix.txt
+
+#Matrix file preamble
+if [ -f $MATRIX ] ; then
+	rm $MATRIX
+fi
+
+echo -e "           \t |Deposit\t         \t          \t           \t\t\t|Withdraw" >> $MATRIX
+echo -e "StuID \t\t |Pass \t GM_If \t GM_Else \t GM_Exprs \t GM_GuardVar \t|Pass \t GM_If \t GM_Else \t GM_Exprs \t GM_GuardVar" >> $MATRIX
+echo 	"----------------------------------------------------------------------------------------------------------------------" >> $MATRIX
+
+#Run checks for all students
 if [ -d $OUTDIR ] ; then
 	echo "Removing previous output directory"
 	rm -r $OUTDIR

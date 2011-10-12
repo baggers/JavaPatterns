@@ -12,6 +12,17 @@ SCRIPTDIR=/home/alex/Dropbox/Uni-2011/Honours/dev/scripts/weather
 #Location of output folder
 OUTDIR=/home/alex/output-weather
 
+MATRIX=/home/alex/Weather-Matrix.txt
+
+#Matrix file preamble
+if [ -f $MATRIX ] ; then
+	rm $MATRIX
+fi
+
+echo -e "           \t |Maximum\t         \t          \t           \t\t\t\t\t\t\t\t\t\t\t\t|Minimum" >> $MATRIX
+echo -e "StuID \t\t |Pass \t SFL_For \t SFL_ForInit \t SFL_ForCond \t SFL_LocalVar \t SFL_ForLV \t SFL_Return \t|Pass \t SFL_For \t SFL_ForInit \t SFL_ForCond \t SFL_LocalVar \t SFL_ForLV \t SFL_Return" >> $MATRIX
+echo 	"----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" >> $MATRIX
+
 if [ -d $OUTDIR ] ; then
 	echo "Removing previous output directory"
 	rm -r $OUTDIR
@@ -29,7 +40,6 @@ do
 done
 
 #Execute summary script
-#TODO uncomment this when scripts working
 bash $SCRIPTDIR/checkstyle-analyse-weather
 
 exit 0
