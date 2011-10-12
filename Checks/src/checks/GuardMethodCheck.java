@@ -50,15 +50,15 @@ public class GuardMethodCheck extends Check
 		// Convert the identity to a readable method string
 		String methodName = util.StringUtil.fixName(s);
 		
-		// If the method name is the specified to be checked -> perform the 3 checks
-		for(String m: this.mName)
+		// If the method name is the specified to be checked - begin the checklist
+		for(String m: mName)
 		{
 			if (m.equals(methodName))
 			{				
 				// Flags for each condition of success
 				boolean i = false, e = false, oi = false, gv = false;
 				
-				// Check the method contains a statement list
+				// Check the method contains a statement list - this statement list contains the methods "code"
 				DetailAST slist	= ast.findFirstToken(TokenTypes.SLIST);
 				
 				if (slist == null)
@@ -68,15 +68,15 @@ public class GuardMethodCheck extends Check
 				}
 				
 				// Check if statement in method
-				DetailAST ifAST = checkIf(slist);
+				i = checkIf(slist);
 				
-				// If the method contains the minimal required if statement check the following
-				if (ifAST != null)
+				// Proceed to check the remaining guard method checklist items
+				if (i)
 				{
-					i	= true;
-					e	= checkElse(ifAST);
-					oi	= checkOutsideIf(ast);
-					gv	= checkGuardVar(ifAST, methodName);
+					DetailAST ifAST = slist.findFirstToken(TokenTypes.LITERAL_IF);
+					e				= checkElse(ifAST);
+					oi				= checkOutsideIf(slist);
+					gv				= checkGuardVar(ifAST, methodName);
 				}
 				
 				reportLog(reportStyle, ast, methodName, i, e, oi, gv);
@@ -131,9 +131,9 @@ public class GuardMethodCheck extends Check
 	 * @param mName method AST name
 	 * @return the if AST if it exists, null otherwise
 	 */
-	private DetailAST checkIf(DetailAST ast)
-	{		
-		return ast.findFirstToken(TokenTypes.LITERAL_IF);
+	private boolean checkIf(DetailAST ast)
+	{
+		return ast.branchContains(TokenTypes.LITERAL_IF);
 	}
 	
 	/**
@@ -148,14 +148,15 @@ public class GuardMethodCheck extends Check
 	}
 	
 	/**
-	 * Checks the method for expressions present outside the if statement block.
+	 * Checks the method for expressions outside the if statement.
+	 * Counts the expressions present in the statement list (these are the expressions that should not be present)
 	 * 
-	 * @param ast the method AST
+	 * @param ast the methods statement list
 	 * @return true if there are no expressions present outside the if statement, false otherwise
 	 */
 	private boolean checkOutsideIf(DetailAST ast)
 	{
-		return ast.findFirstToken(TokenTypes.SLIST).getChildCount(TokenTypes.EXPR) == 0;
+		return ast.getChildCount(TokenTypes.EXPR) == 0;
 	}
 	
 	/**
@@ -169,10 +170,10 @@ public class GuardMethodCheck extends Check
 	{
 		/*
 		 *  Concept:
-		 *  Traverse if slist tree
-		 *  Find all exprs (At present this only searches the immediate children of if slist for exprs)
-		 *  Find first child of each expr - flag in found array if matches a guard var
-		 *  Output if all guard vars were found
+		 *  Traverse if statement list
+		 *  Find all expressions within this statement list (using dfs)
+		 *  For each expression found - check if its identifier matches a required guard variable
+		 *  Return if all guard variables were found
 		 */
 		
 		// Flag found each guard variable - if any remain false at the end of this method, the pattern has not been implemented correctly
@@ -180,6 +181,9 @@ public class GuardMethodCheck extends Check
 			
 		// if statement list
 		DetailAST ifSlist 	= ifAST.findFirstToken(TokenTypes.SLIST);
+		
+		// search the if statement list for expressions
+		// dfs handles checking identifiers in the expressions found using the checkIdent method
 		dfs(ifSlist, TokenTypes.EXPR);
 		
 		boolean foundAllGV	= true;
@@ -203,12 +207,12 @@ public class GuardMethodCheck extends Check
 	 */
 	private void checkIdent(DetailAST ident)
 	{
-		String exprLeftVar = util.StringUtil.fixName(ident.toString());
+		String identName = util.StringUtil.fixName(ident.toString());
 		for (int i = 0; i < guardVars.length; i++)
 		{
-			// Check if a guard variable or a this.guard variable
-			// E.g. guard variable balance and this.balance
-			if (exprLeftVar.equals(guardVars[i]) || exprLeftVar.equals("this."+guardVars[i]));
+			// Check if a guard variable or this.guard variable
+			// E.g. guard variable: balance and this.balance
+			if (identName.equals(guardVars[i]) || identName.equals("this."+guardVars[i]));
 			{
 				found[i] = true;
 			}
@@ -219,7 +223,6 @@ public class GuardMethodCheck extends Check
 	 * AST traversal method. Given a starting AST 'a', traverses the tree looking for the specified 'type' token.
 	 * When the token is found checkIdent is called to check the EXPR (default type searched for).
 	 * 
-	 * TODO Extension to make the method more viable with different token types and what to do when the type is found.
 	 * @param a the AST to be traversed
 	 * @param type the token type to find in 'a'
 	 */
@@ -230,10 +233,15 @@ public class GuardMethodCheck extends Check
 		// Check if EXPR - if it is check for guard variable
 		if (a.getType() == type)
 		{
-			// check the expr to see if it contains the specified guard variable
-			// TODO note what situations might this double getFirstChild fail for an EXPR ?
-			checkIdent(a.getFirstChild().getFirstChild());
-			// return now and continue with the recursive dfs which will search other siblings
+			// a is an expression
+			// i represents the identifier of the left variable of the expression.
+			// e.g. i = 10 or i <= 10
+			DetailAST i = a.getFirstChild().getFirstChild();
+			
+			// check i to see if it matches a specified guard variable - verifying it is guarded within the if statement
+			checkIdent(i);
+			
+			// return and continue with other nodes
 			return;
 		}
 		// Perform the recursive search
