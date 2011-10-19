@@ -21,10 +21,16 @@ public class IdempotentCheck extends Check {
 	public void visitToken(DetailAST a)
 	{
 		count = 0;
+		
+		// Find the method identity of the token (i.e. the method name)
+		String s = a.findFirstToken(TokenTypes.IDENT).toString();
+		// Convert the identity to a readable method string
+		String methodName = util.StringUtil.fixName(s);
+		
 		// for each method DetailAST search for assignment nodes
 		dfs(a, TokenTypes.ASSIGN);
 		if (count != 0)
-			log(a.getLineNo(), "Identified "+count+" idempotent assignments.");
+			log(a.getLineNo(), "Identified "+count+" idempotent assignments in " +methodName);
 	}
 	
 	/**
@@ -71,7 +77,7 @@ public class IdempotentCheck extends Check {
 			// compare to see if the strings match, therefore idempotent assignment identified
 			if (identOne.equals(identTwo))
 			{
-				log(a.getFirstChild().getLineNo(), "Identified assignment - "+identOne+" = "+identTwo);
+				log(a.getFirstChild().getLineNo(), "Assignment: "+identOne+" = "+identTwo);
 				count++;
 			}
 		}		

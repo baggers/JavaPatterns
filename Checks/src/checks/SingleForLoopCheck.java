@@ -63,45 +63,45 @@ public class SingleForLoopCheck extends Check {
 				initLocalVar = null;
 				
 				// Determine the method statement list AST (contains the code for the method)
-				DetailAST mSlist = ast.findFirstToken(TokenTypes.SLIST);
+				DetailAST methodSlist = ast.findFirstToken(TokenTypes.SLIST);
 				
 				// The method is very very wrong - it has nothing in it!?
-				if (mSlist == null)
+				if (methodSlist == null)
 				{
 					System.out.println("No statement list found in " +methodName);
 					// Add log output?
 					continue;
 				}
-			
-//				System.out.println("Starting LV check");
+								
+				// check use of for loop in method statement list
+				f = checkFor(methodSlist);
 				
-				// check statement list AST for local variable max/min = aName[0]
+				// For instances where the methd may make calls to outside helper functions
+				// this check avoids any exceptions being thrown.
+				if (forAST == null)
+				{
+					System.out.println("No literal for found - strange code.");
+					reportLog(reportStyle, ast, methodName, f, fc, fi, fif, fr, lv);
+					return;
+				}
 				
-				
-				
-				
-				// check use of for loop in method ast
-				f = checkFor(mSlist);
-				
-				System.out.println(forAST);
-				
-				// local slist containing the for loop and other code
+				// local slist containing the for loop (and potentially other code)
 				// NOTE This was required for students who may have encapsulated their method in an if statement - to check for an empty array
 				// it is out of scope for novices, however, this implementation remains functional for both instances.
 				DetailAST localSlist = forAST.getParent();
 				
-				// check for AST conditions:
+				// check the forAST conditions:
 				// 1. for condition uses aName.length
 				// 2. for init begins at 1 rather than 0
 				// 3. if statement present to update local min/max
 				
-				System.out.println("check for loop params");
+				//System.out.println("check for loop params");
 				if (f)
 				{
 					fc 	= checkForCondition(forAST);
-					System.out.println("condition "+fc);
+//					System.out.println("condition "+fc);
 					fi	= checkForInit(forAST);
-					System.out.println("init "+fi);
+//					System.out.println("init "+fi);
 				}
 				
 				
@@ -195,14 +195,16 @@ public class SingleForLoopCheck extends Check {
 	private boolean checkFor(DetailAST a)
 	{	
 		forAST = null;
+//		System.out.println(a);
 		if(a.branchContains(TokenTypes.LITERAL_FOR))
 		{
-			System.out.println("Found literal for in branch");
-			// traverse the method AST to find the for AST and set it to the private global variable
-			// global var used as treetraversal returns void
+//			System.out.println("contains for");
+			
+			// Search the method statement list to a literal for
+			// Set this for loop to the forAST global variable for use in other functions
 			dfs(a, TokenTypes.LITERAL_FOR, 2);
 //			System.out.println("tree traversal done");
-			return forAST != null;			
+			return forAST != null;
 		}
 		return false;
 	}

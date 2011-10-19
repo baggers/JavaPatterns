@@ -59,24 +59,37 @@ public class GuardMethodCheck extends Check
 				boolean i = false, e = false, oi = false, gv = false;
 				
 				// Check the method contains a statement list - this statement list contains the methods "code"
-				DetailAST slist	= ast.findFirstToken(TokenTypes.SLIST);
+				DetailAST methodSlist	= ast.findFirstToken(TokenTypes.SLIST);
 				
-				if (slist == null)
+				if (methodSlist == null)
 				{
 					System.out.println("No slist found in " +methodName);
-					continue;
+					return;
 				}
 				
 				// Check if statement in method
-				i = checkIf(slist);
+				System.out.println("Check if");
+				i = checkIf(methodSlist);
 				
+				System.out.println("Finished if");
 				// Proceed to check the remaining guard method checklist items
 				if (i)
 				{
-					DetailAST ifAST = slist.findFirstToken(TokenTypes.LITERAL_IF);
+					System.out.println("Checking others");
+					DetailAST ifAST = methodSlist.findFirstToken(TokenTypes.LITERAL_IF);
+					if (ifAST == null)
+					{
+						System.out.println("No if AST found??? Weird code found.");
+						reportLog(reportStyle, ast, methodName, i, e, oi, gv);
+						return;
+					}
+					System.out.println("else");
 					e				= checkElse(ifAST);
-					oi				= checkOutsideIf(slist);
+					System.out.println("oi");
+					oi				= checkOutsideIf(methodSlist);
+					System.out.println("gv");
 					gv				= checkGuardVar(ifAST, methodName);
+					System.out.println("fin");
 				}
 				
 				reportLog(reportStyle, ast, methodName, i, e, oi, gv);
@@ -178,14 +191,12 @@ public class GuardMethodCheck extends Check
 		
 		// Flag found each guard variable - if any remain false at the end of this method, the pattern has not been implemented correctly
 		found 	= new boolean[guardVars.length];
-			
-		// if statement list
-		DetailAST ifSlist 	= ifAST.findFirstToken(TokenTypes.SLIST);
 		
 		// search the if statement list for expressions
 		// dfs handles checking identifiers in the expressions found using the checkIdent method
-		dfs(ifSlist, TokenTypes.EXPR);
-		
+		System.out.println("dfs");
+		dfs(ifAST, TokenTypes.EXPR);
+		System.out.println("dfs fin");
 		boolean foundAllGV	= true;
 		
 		// Check if all guard variables have been found
@@ -193,7 +204,7 @@ public class GuardMethodCheck extends Check
 		{
 			if (!found[i])
 			{
-				log(ifSlist.getLineNo(), "Err_GM_GVar ''"+m+"'' did not guard "+guardVars[i]);
+				log(ifAST.getLineNo(), "Err_GM_GVar ''"+m+"'' did not guard "+guardVars[i]);
 				foundAllGV = false;
 			}
 		}
@@ -233,13 +244,28 @@ public class GuardMethodCheck extends Check
 		// Check if EXPR - if it is check for guard variable
 		if (a.getType() == type)
 		{
-			// a is an expression
-			// i represents the identifier of the left variable of the expression.
-			// e.g. i = 10 or i <= 10
-			DetailAST i = a.getFirstChild().getFirstChild();
+			/*
+			 * Two types of possible expressions
+			 * 1. An assignment where x = y and an operator is used
+			 * 2. A return statement where no operator is used
+			 */
+			System.out.println(a);
+			DetailAST i;
+			// 1.
+			if (a.getChildCount(TokenTypes.IDENT) > 1)
+			{
+				i = a.getFirstChild().getFirstChild();
+			} else {
+			// 2.
+				i = a.getFirstChild(); 
+			}
 			
-			// check i to see if it matches a specified guard variable - verifying it is guarded within the if statement
-			checkIdent(i);
+			if(i == null)
+				//TODO this expression most likely a return x. single ident.
+				System.out.println("Weird expr different altogether");
+			else
+				// check i to see if it matches a specified guard variable - verifying it is guarded within the if statement
+				checkIdent(i);
 			
 			// return and continue with other nodes
 			return;
@@ -259,6 +285,9 @@ public class GuardMethodCheck extends Check
 				return;
 		}
 	}	
+	/*
+	 * 
+	 */
 	
 	/**
 	 * Sets the method name property
