@@ -100,7 +100,7 @@ public class SingleForLoopCheck extends Check {
 				{
 					fc 	= checkForCondition(forAST);
 //					System.out.println("condition "+fc);
-					fi	= checkForInit(forAST);
+//					fi	= checkForInit(forAST);
 //					System.out.println("init "+fi);
 				}
 				
@@ -157,10 +157,11 @@ public class SingleForLoopCheck extends Check {
 			else
 				log(a.getLineNo(), "Err_SFL_ForCond ''"+m+"'' does not use length of ''"+aName+"'' as looping condition");
 			
-			if (fi)
+/*			if (fi)
 				log(a.getLineNo(), "Suc_SFL_ForInit ''"+m+"'' initialises for loop init with 2nd element in ''"+aName+"''");
 			else
 				log(a.getLineNo(), "Err_SFL_ForInit ''"+m+"'' does not initiliase for loop init with 2nd element in ''"+aName+"''");
+*/
 			
 			if (flv)
 				log(a.getLineNo(), "Suc_SFL_ForLV ''"+m+"'' assigns/updates the local variable value inside the for loop");
@@ -174,7 +175,8 @@ public class SingleForLoopCheck extends Check {
 			
 
 			// Pass
-			if (f && fc && fi && flv && lv && fr)
+			// Note: Removed for init check
+			if (f && fc && flv && lv && fr)
 				log(a.getLineNo(), " Complete_Pass ''"+m+"'' correctly implements the Single For Loop pattern");
 			else
 				log(a.getLineNo(), " Incomplete_Pass ''"+m+"'' incorrectly implements the Single For Loop pattern");
@@ -240,6 +242,7 @@ public class SingleForLoopCheck extends Check {
 	}
 	
 	/**
+	 * REDO
 	 * For min/max methods check use of local max/min variable and that it is initialised to the first element of the array
 	 * @param a the method statement list AST
 	 * @return true, if one of the local variables defined in the method contain an initialisation to the first element of the array
@@ -247,6 +250,7 @@ public class SingleForLoopCheck extends Check {
 	private boolean checkLocalVariable(DetailAST a)
 	{
 //		System.out.println("checkLV method");
+		// searching for an index op for assignment of LV e.g. max = obs[0] - not guaranteed.
 		dfs(a, TokenTypes.INDEX_OP, 0);
 		return initLocalVar != null;
 	}
@@ -326,6 +330,7 @@ public class SingleForLoopCheck extends Check {
 			case 0: checkIndexOp(a); break;
 			case 1: checkLV(a); break;
 			case 2: forAST = a; break;
+			case 3: //new check; break;
 			}
 			return;
 		}
@@ -436,11 +441,44 @@ public class SingleForLoopCheck extends Check {
 		{
 			result = result || (parent == t);
 		}
-		
-		return result;
-		
+		return result;	
 	}
 	
+	
+/* 	NEW SECTION
+	FIX CHECK LOCAL VAR - for each potential local variable we check 3 things
+		1. initialised (declared and assigned a value - search for the equals op)
+		2. written to inside the for loop (updated in some way shape or form)
+		3. read in return (contained within the return statement in some shap or form)
+		
+	Search for all potential lv's using equal
+	Check each case
+	If pass all 3 - found correct local variable and OK
+	If none pass - no local variable correct - generic error message
+*/
+	/**
+	 * Checks variables in the method to see if a local variable suitable to the problem has been used correctly
+	 * Correct use involves:
+	 * 1. Declaring and assigning it inside the method
+	 * 2. Writing (updating) its value somewhere within the for loop
+	 * 3. Returning an expression that contains the variable
+	 * 
+	 * Example: Using a max/min local variable to determine smallest/largest value in array
+	 * @param a The method AST
+	 * @return true, if a variable was found to contain the 3 conditions. false, if no variables matched all conditions
+	 */
+	private boolean checkVariable(DetailAST a)
+	{
+		boolean pass = false;
+		// Assume that all considered variables declared will have a corresponding assign.
+		// Two forms:
+		// 1. int x; x = 0; [variable def and expression with assign]
+		// 2. int x = 0;	[variable def with assign]
+		// Both will have an assignment token
+		dfs(a, TokenTypes.ASSIGN, 4);
+		return pass;
+	}
+
 	
 	/**
 	 * Sets the method name property
