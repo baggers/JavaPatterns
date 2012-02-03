@@ -111,7 +111,11 @@ public class TreeUtil {
 	{
 		varName = var;
 		System.out.println("var is: " + var);
+		
+		System.out.println(tree.toString());
 		found = false;
+		
+		
 	
 		
 		// WORKING
@@ -141,21 +145,23 @@ public class TreeUtil {
 		{
 			// have an expression - all we need to do is check if the left child of the op is an ident and then matches 'var'
 			
-			// Note
-			// Check for the 2 found cases:
-			// 1. Expression without an operator (ONLY in variable defs)	e.g. int x = y; Where y is read and has the tree (= -> expr -> y) with no intermediate operator
-			// 2. Expression with an operator (ALL other expr trees)	e.g. x = y + 2; Where y is read and has the tree (= -> expr -> y , 2)
-			//															e.g. x = y;     Where y is read and has the tree (expr -> = -> x, y)
+			/* Note
+			 	Check for the 2 found cases:
+			 	1. Expression without an operator (ONLY in variable defs)	e.g. int x = y; Variable def checks for write to x, y appears as an expression with 1 child.
+			 	We want to ignore any expressions of this form as y is not being written to, instead it is read. See above in varRead for further details.
+			
+			 	2. Expression with an operator (ALL other expr trees)		e.g. x = y + 2;
+			*/
 			
 			// For writing we only care about Case 2. So any expression that looks like Case 1 is disregarded - handle this below.
 		
 			DetailAST op = tree.getFirstChild();
 			
 			// Case 1 - NO
-			if (tree.getFirstChild().getType() == TokenTypes.IDENT)
+			if (tree.getFirstChild().getChildCount() == 0)
 			{
-				System.out.println("W: Found Case 1 and disregarded");
-				return false;
+					System.out.println("W: Found Case 1 with expression with single child => disregard");
+					return false;				
 			}
 			else
 			{

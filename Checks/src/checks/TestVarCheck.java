@@ -13,7 +13,7 @@ public class TestVarCheck extends Check {
 	
 	@Override
 	public int[] getDefaultTokens() {
-		return new int[]{TokenTypes.EXPR};
+		return new int[]{TokenTypes.EXPR, TokenTypes.VARIABLE_DEF};
 	}
 	
 	
@@ -22,8 +22,8 @@ public class TestVarCheck extends Check {
 	@Override
 	public void visitToken(DetailAST a)
 	{
-	//	util.TreeUtil.varRead(a, "x");
-		util.TreeUtil.varRead(a, "y");
+		util.TreeUtil.varRead(a, "x");
+		util.TreeUtil.varWritten(a, "x");
 		
 		/*
 		DetailAST body = a.getFirstChild();
