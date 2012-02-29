@@ -7,9 +7,9 @@ public class TreeUtil {
 	/* 	int x = 0		variable def -> x equals -> int & expr -> 0 			WRITE X
 	 *  int x = y + 2	variable def -> x equals -> expr -> add -> y 2			WRITE X, READ Y
 		int y			variable def -> y										?
-		y = 0			expr -> equals (operator) -> y 0						WRITE
-		x = y			expr -> equals -> x y									WRITE X, READ Y
-		x = y + 1		expr -> equals -> x add -> y 1							WRITE X, READ Y
+		y = 0			expr -> equals/assign (operator) -> y 0						WRITE
+		x = y			expr -> equals/assign -> x y									WRITE X, READ Y
+		x = y + 1		expr -> equals/assign -> x add -> y 1							WRITE X, READ Y
 	
 		read 	= contained within the right subtree after a variable def or expr-operator
 		write	= immediate left child of variable def or expr-operator
@@ -22,20 +22,16 @@ public class TreeUtil {
 		1. Search a variable declaration to see if a var has been written to (i.e. initialised)
 		2. Search an expression to see if a var has been written to (i.e. assignment of some sort - left side of =)
 		3. Search an expression to see if a var has been read  (i.e. right side of = )
-		
-		
-			
-		TODO At present - not breaking when variable is found in dfs - redo flag found
 	*/
 	
 	private static String varName;
 	private static boolean found;
 
 	/**
-	 * Given a tree determine if the var is read within this tree
+	 * Given a tree determine if the var is read within this tree of token type expression or variable definition
 	 * @param tree the variable definition or an expression tree
 	 * @param var the variable name we are interested in finding
-	 * @return true if the variable is read, false if it is not
+	 * @return true, if the variable is read. false if it is not
 	 */
 	public static boolean varRead(DetailAST tree, String var)
 	{
@@ -46,18 +42,15 @@ public class TreeUtil {
 		
 		//NOTE: Can we say that we will only be checking for a variable being read in an expression? Yes for now.
 
-/*		// A variable declaration may contain an expression with a variable that is read
-		if (tree.getType() == TokenTypes.VARIABLE_DEF)
-		{
-			// do nothing
-			//System.out.println("R: variable def - come back to.");
-			return false;
-		}
-*/
 		// Expression tree - checking if var has been read
-		System.out.println();
-		System.out.println(tree.toString());
-		
+		System.out.println("varRead checking: " +tree.toString());
+
+		// TODO Variable being read is checked in the return statement
+		// Works when passed the return statement tree rather than an explicit expr
+		if (tree.getType() != TokenTypes.EXPR && tree.getType() != TokenTypes.VARIABLE_DEF)
+		{
+			System.out.println("Checking a non expr/var def tree - check this");
+		}
 		
 		// Case 1: Operator -> Expression -> Single child (var or int)
 		if (tree.getFirstChild().getChildCount() == 0)
@@ -97,27 +90,32 @@ public class TreeUtil {
 			System.out.println("R: Finished dfs - found = " + found);
 			return found;
 		}
-		else
-		{
-			System.out.println("R: Expression contains a more complex left side of the operator - fix/check.");
-		}
 		
-		System.out.println("R: Something strange");
+		// Here we have the situation where it is a complex statement for example an expression that also contains an expression inside.
+		// When this occurs, we cannot assume that the local variable WILL be only on the right subtree.
 		
-		return false;
+		
+		System.out.println("R: Testing complex case for read");
+		// TODO test this thoroughly - ensure also works with old examples
+		// Working with simple test!
+		dfs(op, TokenTypes.IDENT, 0);
+		
+		return found;
 	}
 	
+	
+	/**
+	 * Identifies if the particular variable var is written to (assigned) within the given tree
+	 * @param tree an expression or variable definition AST
+	 * @param var the name of the variable to be searched for
+	 * @return true, if the variable is found to be written to. false if it is not
+	 */
 	public static boolean varWritten(DetailAST tree, String var)
 	{
-		varName = var;
-		System.out.println("var is: " + var);
-		
-		System.out.println(tree.toString());
+		varName = var;		
+		System.out.println("varWritten checking: " +tree.toString());
 		found = false;
-		
-		
-	
-		
+				
 		// WORKING
 		if (tree.getType() == TokenTypes.VARIABLE_DEF)
 		{
@@ -130,7 +128,7 @@ public class TreeUtil {
 			if (id != null)
 			{
 				// Looking good
-				System.out.println("W: Checking the first child of the variable def");
+				System.out.println("W: Checking the first child of the variable def to see if the var we are looking for");
 				checkVar(id);
 				System.out.println("W: Returning found = " + found);
 				return found;
@@ -140,8 +138,8 @@ public class TreeUtil {
 				System.out.println("R: Variable def tree has no identifier");
 			}
 		}
-		// TODO Fails some expression trees with only 1 child - check
-		else
+		// Handle expression tree
+		if (tree.getType() == TokenTypes.EXPR)
 		{
 			// have an expression - all we need to do is check if the left child of the op is an ident and then matches 'var'
 			
@@ -168,21 +166,21 @@ public class TreeUtil {
 			// Case 2 - GO
 				if (op.getFirstChild().getType() == TokenTypes.IDENT)
 				{
-					System.out.println("W: Checking ops first child which is an ident to see if it is 'var'");
+					System.out.println("W: Checking ops first child which is an ident to see if it is '" +var+"'");
 					checkVar(op.getFirstChild());
 					System.out.println("W: Returning if var found = " +found);
 					return found;
 				}
 			}
 		}
-		System.out.println("Something weird has occurred");
 		
-		
+		// We have been passed an AST that is neither a variable definition or expression
+		System.out.println("Tree argument is not the correct token type - expected either expression or variable definition");
 		return false;
 	}
 	
 	/**
-	 * depth first search
+	 * Depth first search
 	 * @param a the tree to be searched
 	 * @param type the token type to be searched for
 	 * @param method what method to call when a token of the particular type is found
@@ -219,12 +217,15 @@ public class TreeUtil {
 		}
 	}
 	
-	// Check if the ident matches the var we are interested in
+	/**
+	 * Check a given identity token to see if it matches our required variable name. If it matches, sets global flag found to true.
+	 * @param ident the identity tree
+	 */
 	public static void checkVar(DetailAST ident)
 	{
 		String iName = ident.toString();
 		// if the ident matches the variable we are searching for - flag it
-		System.out.println("Ident : " + util.StringUtil.fixName(iName));
+		//System.out.println("Ident : " + util.StringUtil.fixName(iName));
 		if (util.StringUtil.fixName(iName).equals(varName))
 			found = true;
 	}

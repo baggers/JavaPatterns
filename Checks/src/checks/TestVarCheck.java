@@ -22,8 +22,15 @@ public class TestVarCheck extends Check {
 	@Override
 	public void visitToken(DetailAST a)
 	{
+		System.out.println("varRead on x");
 		util.TreeUtil.varRead(a, "x");
+		System.out.println();
+		System.out.println("varWritten on x");
 		util.TreeUtil.varWritten(a, "x");
+		System.out.println();
+		
+//		util.TreeUtil.varRead(a,  "y");
+//		util.TreeUtil.varWritten(a,  "y");
 		
 		/*
 		DetailAST body = a.getFirstChild();
@@ -39,7 +46,7 @@ public class TestVarCheck extends Check {
 			if (body.getType() == TokenTypes.EXPR)
 			{
 				System.out.println("expr check");
-//				util.TreeUtil.varWritten(body, "x");
+				util.TreeUtil.varWritten(body, "x");
 				util.TreeUtil.varRead(body,  "x");
 			}
 			
