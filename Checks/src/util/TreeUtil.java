@@ -93,7 +93,8 @@ public class TreeUtil {
 		
 		// Here we have the situation where it is a complex statement for example an expression that also contains an expression inside.
 		// When this occurs, we cannot assume that the local variable WILL be only on the right subtree.
-		
+		// Further investigation may need to be done. This should ONLY occur for examples when there is no just a simple return x or 1-2 operators
+		// instead when there are also method calls that create a more complex and higher depth subtree for the return statement AST
 		
 		System.out.println("R: Testing complex case for read");
 		// TODO test this thoroughly - ensure also works with old examples
