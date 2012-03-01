@@ -277,38 +277,38 @@ public class SingleForLoopCheck extends Check {
 		System.out.println("Starting while loop");
 		while (slistChildren.getNextSibling() != null)
 		{
-			System.out.println("Checking child " + slistChildren.toString());
+			System.out.println("\tChecking child " + slistChildren.toString());
 			if (slistChildren.getType() == TokenTypes.VARIABLE_DEF)
 			{
-				System.out.println("Found variable definition.");
+				System.out.println("\t\tFound variable definition.");
 				localVariable = util.StringUtil.fixName(slistChildren.findFirstToken(TokenTypes.IDENT).toString());
-				System.out.println("Local variable to check: " + localVariable);
+				System.out.println("\t\tLocal variable to check: " + localVariable);
 				
-				System.out.println("Setting checkWrite/Read to false");
+				System.out.println("\t\tSetting checkWrite/Read to false");
 				checkWrite 	= false;
 				checkRead 	= false;
 				
 				if (a.findFirstToken(TokenTypes.LITERAL_FOR) == null)
 				{
-					System.out.println("No FOR found in immediate children - check");
+					System.out.println("\t\tNo FOR found in immediate children - check");
 					continue;
 				}
 				
 				if (a.findFirstToken(TokenTypes.LITERAL_RETURN) == null)
 				{
-					System.out.println("No RETURN found in immediate children - check");
+					System.out.println("\t\tNo RETURN found in immediate children - check");
 					continue;
 				}
 				
 				// Here we need to check for any expressions or variable definitions within the for loop and/or return statementS
 				
-				System.out.println("Setting for slist");
+				System.out.println("\t\tSetting for slist");
 				DetailAST forSlist = a.findFirstToken(TokenTypes.LITERAL_FOR).findFirstToken(TokenTypes.SLIST);
 				
 				// Use dfs to search the for statement list for expressions and variable definitions
-				System.out.println("Calling dfs for exprs on for slist");
+				System.out.println("\t\tCalling dfs for exprs on for slist");
 				dfs(forSlist, TokenTypes.EXPR, 3);
-				System.out.println("Calling dfs for var defs on for slist");
+				System.out.println("\t\tCalling dfs for var defs on for slist");
 				dfs(forSlist, TokenTypes.VARIABLE_DEF, 3);
 				
 				// dfs will set checkWrite to true if the current localVariable is written to within the for loop
@@ -317,13 +317,13 @@ public class SingleForLoopCheck extends Check {
 				// TODO test against any variations of return statements - assumed tree looks like "LITERAL RETURN -> EXPR -> ________"
 				DetailAST returnStatement = a.findFirstToken(TokenTypes.LITERAL_RETURN);
 				
-				System.out.println("Calling dfs on exprs for return statement");
+				System.out.println("\t\tCalling dfs on exprs for return statement");
 				dfs(returnStatement, TokenTypes.EXPR, 4);
 				
 				// As soon as a local variable passes both checks - we have a suitable use of local variable for the method
 				if (checkWrite && checkRead)
 				{
-					System.out.println("Local variable " +localVariable + " is written and read correclty");
+					System.out.println("\t\tLocal variable " +localVariable + " is written and read correclty");
 					return true;
 				}
 			}
@@ -343,17 +343,18 @@ public class SingleForLoopCheck extends Check {
 	private void checkLVWrite(DetailAST a)
 	{
 		// Called when either an EXPR or VAR DEF is found within the for loop
-		System.out.println("CheckLVWrite on " +a.toString());
+		System.out.println("\t\tCheckLVWrite on " +a.toString());
 		checkWrite 	= util.TreeUtil.varWritten(a, localVariable);
+		System.out.println("\t\tCheckWrite = " +checkWrite);
 		
 	}
 	
 	private void checkLVRead(DetailAST a)
 	{
 		// Called when an EXPR is found within the return statement to check if the current lv is read
-		System.out.println("CheckLVRead on " +a.toString());
+		System.out.println("\t\tCheckLVRead on " +a.toString());
 		checkRead = util.TreeUtil.varRead(a, localVariable);
-		System.out.println("CheckRead = " +checkRead);
+		System.out.println("\t\tCheckRead = " +checkRead);
 	}
 	
 	/**
@@ -367,7 +368,7 @@ public class SingleForLoopCheck extends Check {
 		// halt dfs if we have already confirmed a write on the local variable
 		if (method == 3 && checkWrite)
 		{
-			System.out.println("Halting DFS as checkWrite already true");
+//			System.out.println("Halting DFS as checkWrite already true");
 			return;
 		}
 		

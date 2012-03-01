@@ -52,6 +52,9 @@ public class TreeUtil {
 			System.out.println("Checking a non expr/var def tree - check this");
 		}
 		
+		
+/*		OLD - WAS MEANT TO HANDLE VARIATIONS IN EXPRESSIONS AND VAR DEF - TOO COMPLEX AT THIS STAGE
+		
 		// Case 1: Operator -> Expression -> Single child (var or int)
 		if (tree.getFirstChild().getChildCount() == 0)
 		{
@@ -95,11 +98,19 @@ public class TreeUtil {
 		// When this occurs, we cannot assume that the local variable WILL be only on the right subtree.
 		// Further investigation may need to be done. This should ONLY occur for examples when there is no just a simple return x or 1-2 operators
 		// instead when there are also method calls that create a more complex and higher depth subtree for the return statement AST
+*/
 		
-		System.out.println("R: Testing complex case for read");
+		// New - Assumption:
+		// If we assume that the return statement only contains possible "reads" of variables. Then we simply check the return statement for expressions
+		// and check for the local variable required.
+		
+		// Note: This changes the functionality of varRead....
+		// TODO CHECK THIS
+		
+//		System.out.println("R: Testing complex case for read");
 		// TODO test this thoroughly - ensure also works with old examples
 		// Working with simple test!
-		dfs(op, TokenTypes.IDENT, 0);
+		dfs(tree, TokenTypes.IDENT, 0);
 		
 		return found;
 	}
@@ -129,14 +140,14 @@ public class TreeUtil {
 			if (id != null)
 			{
 				// Looking good
-				System.out.println("W: Checking the first child of the variable def to see if the var we are looking for");
+				System.out.println("\tW: Checking the first child of the variable def to see if the var we are looking for");
 				checkVar(id);
-				System.out.println("W: Returning found = " + found);
+				System.out.println("\tW: Returning found = " + found);
 				return found;
 			}
 			else
 			{
-				System.out.println("R: Variable def tree has no identifier");
+				System.out.println("\tW: Variable def tree has no identifier");
 			}
 		}
 		// Handle expression tree
@@ -159,7 +170,7 @@ public class TreeUtil {
 			// Case 1 - NO
 			if (tree.getFirstChild().getChildCount() == 0)
 			{
-					System.out.println("W: Found Case 1 with expression with single child => disregard");
+					System.out.println("\tW: Found Case 1 with expression with single child => disregard");
 					return false;				
 			}
 			else
@@ -167,16 +178,16 @@ public class TreeUtil {
 			// Case 2 - GO
 				if (op.getFirstChild().getType() == TokenTypes.IDENT)
 				{
-					System.out.println("W: Checking ops first child which is an ident to see if it is '" +var+"'");
+					System.out.println("\tW: Checking ops first child which is an ident to see if it is '" +var+"'");
 					checkVar(op.getFirstChild());
-					System.out.println("W: Returning if var found = " +found);
+					System.out.println("\tW: Returning if var found = " +found);
 					return found;
 				}
 			}
 		}
 		
 		// We have been passed an AST that is neither a variable definition or expression
-		System.out.println("Tree argument is not the correct token type - expected either expression or variable definition");
+		System.out.println("\tTree argument is not the correct token type - expected either expression or variable definition");
 		return false;
 	}
 	
