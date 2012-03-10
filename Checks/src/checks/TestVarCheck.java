@@ -34,7 +34,7 @@ public class TestVarCheck extends Check {
 		
 		/*
 		DetailAST body = a.getFirstChild();
-		System.out.println("Get first child "+ body.toString());
+//		System.out.println("Get first child "+ body.toString());
 			
 		// check the immediate children of the statement list
 		// should contain some variable defs and expressions based on the var.java test file

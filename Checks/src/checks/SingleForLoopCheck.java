@@ -61,7 +61,7 @@ public class SingleForLoopCheck extends Check {
 //				System.out.println("Entering a method");
 				
 				// Flags for the single for loop checks
-				boolean f = false, fc = false, fi = false, fif = false, fr = false, lv = false;
+				boolean f = false, fc = false, lv = false;
 				initLocalVar = null;
 				
 				// Determine the method statement list AST (contains the code for the method)
@@ -140,7 +140,9 @@ public class SingleForLoopCheck extends Check {
 	 * Checks performed on the method:
 	 * @param f boolean for loop present
 	 * @param fc boolean for loop condition uses aName.length
-	 * @param lv boolean local variable present within the method that is written to within for loop and read within the return statement
+	 * @param lv boolean local variable present within the method
+	 * 
+	 * Note: checkRead and checkWrite are also reported to reflect the correct use of local variables within the method. 
 	 */
 	public void reportLog(int style, DetailAST a, String m, boolean f, boolean fc, boolean lv)
 	{
@@ -157,32 +159,30 @@ public class SingleForLoopCheck extends Check {
 			else
 				log(a.getLineNo(), "Err_SFL_ForCond ''"+m+"'' does not use length of ''"+aName+"'' as looping condition");
 
+			
+			
+			// The lv check simply states that at least one local variable has been defined within the method. This is the lead into the checkRead and
+			// checkWrite reports.
 			if (lv)
-				log(a.getLineNo(), "Suc_SFL_LocalVar ''"+m+"'' uses a local variable that is written within the for loop and read within the return statement");
+				log(a.getLineNo(), "Suc_SFL_LocalVar ''"+m+"'' defines at least one immediate(?) local variable");
 			else
-				log(a.getLineNo(), "Err_SFL_LocalVar ''"+m+"'' does not use a local variable that is written within the for loop and read within the return statement");
+				log(a.getLineNo(), "Err_SFL_LocalVar ''"+m+"'' does not define at least one immediate(?) local variable");
 		
-			
-			
-			// Old reports
-/*			if (fi)
-				log(a.getLineNo(), "Suc_SFL_ForInit ''"+m+"'' initialises for loop init with 2nd element in ''"+aName+"''");
+			// Note: Seperated this check to a more flexible option - simply checks for the use of at least one variable written to within the for loop and read from the return statement
+			// There is no requirement for this to be the same variable as originally planned.
+			if (checkWrite)
+				log(a.getLineNo(), "Suc_SFL_LocalVarWrite ''"+m+"'' uses a local variable that is written within the for loop.");
 			else
-				log(a.getLineNo(), "Err_SFL_ForInit ''"+m+"'' does not initiliase for loop init with 2nd element in ''"+aName+"''");
-
-			if (flv)
-				log(a.getLineNo(), "Suc_SFL_ForLV ''"+m+"'' assigns/updates the local variable value inside the for loop");
-			else
-				log(a.getLineNo(), "Err_SFL_ForLV ''"+m+"'' does not assign/update the local variable value inside the for loop");
+				log(a.getLineNo(), "Err_SFL_LocalVarWrite ''"+m+"'' does not use a local variable that is written within the for loop.");
 			
-			if (fr)
-				log(a.getLineNo(), "Suc_SFL_Return ''"+m+"'' returns the local variable "+m);
+			if (checkRead)
+				log(a.getLineNo(), "Suc_SFL_LocalVarRead ''"+m+"'' uses a local variable that is read within the return statement");
 			else
-				log(a.getLineNo(), "Err_SFL_Return ''"+m+"'' does not return the local variable "+m);
-*/			
+				log(a.getLineNo(), "Err_SFL_LocalVarRead ''"+m+"'' does not use a local variable that is read within the return statement");
+			
 
 			// Pass
-			if (f && fc && lv)
+			if (f && fc && checkRead && checkWrite)
 				log(a.getLineNo(), " Complete_Pass ''"+m+"'' correctly implements the Single For Loop pattern");
 			else
 				log(a.getLineNo(), " Incomplete_Pass ''"+m+"'' incorrectly implements the Single For Loop pattern");
@@ -253,10 +253,15 @@ public class SingleForLoopCheck extends Check {
 	 * For example using max/min to track the highest/lowest value in an array
 	 * This check involves a 3 step check
 	 * 1. Check that a local variable has been defined - find this variable name
-	 * 2. Check that this local variable is written to within the for loop
-	 * 3. Check that this local variable is read within the return statement
+	 * 2. Check that a local variable is written to within the for loop
+	 * 3. Check that a local variable is read within the return statement
+	 * 
+	 * Note: The functionality of this method changed from requiring the variable written and read being the same.
+	 * A local variable must be defined. A local variable must be written to within the for loop. A local variable must be read in the return statement.
+	 * 
+	 * 
 	 * @param a the methods statement list
-	 * @return true if at least one variable within the method satisfies the above three conditions, false if NONE satisfy
+	 * @return true if at least one variable is defined within the method (check 1.) checkRead and checkWrite are set to true to verify the correct use for check 2. and 3.
 	 */
 	private boolean checkLocalVariable(DetailAST a)
 	{
@@ -273,21 +278,25 @@ public class SingleForLoopCheck extends Check {
 		{
 			System.out.println("No children for the method statement list - weird.");
 		}
+		
+		checkWrite 	= false;
+		checkRead 	= false;
+		boolean aLocalVariableUsed = false;
+		
 		// Loop over the immediate children of the statement list looking for the variable definitions
-		System.out.println("Starting while loop");
+//		System.out.println("Starting while loop");
 		while (slistChildren.getNextSibling() != null)
 		{
-			System.out.println("\tChecking child " + slistChildren.toString());
+//			System.out.println("\tChecking child " + slistChildren.toString());
 			if (slistChildren.getType() == TokenTypes.VARIABLE_DEF)
 			{
-				System.out.println("\t\tFound variable definition.");
+				aLocalVariableUsed = true;
+//				System.out.println("\t\tFound variable definition.");
 				localVariable = util.StringUtil.fixName(slistChildren.findFirstToken(TokenTypes.IDENT).toString());
-				System.out.println("\t\tLocal variable to check: " + localVariable);
+//				System.out.println("\t\tLocal variable to check: " + localVariable);
 				
-				System.out.println("\t\tSetting checkWrite/Read to false");
-				checkWrite 	= false;
-				checkRead 	= false;
-				
+//				System.out.println("\t\tSetting checkWrite/Read to false");
+
 				if (a.findFirstToken(TokenTypes.LITERAL_FOR) == null)
 				{
 					System.out.println("\t\tNo FOR found in immediate children - check");
@@ -302,13 +311,13 @@ public class SingleForLoopCheck extends Check {
 				
 				// Here we need to check for any expressions or variable definitions within the for loop and/or return statementS
 				
-				System.out.println("\t\tSetting for slist");
+//				System.out.println("\t\tSetting for slist");
 				DetailAST forSlist = a.findFirstToken(TokenTypes.LITERAL_FOR).findFirstToken(TokenTypes.SLIST);
 				
 				// Use dfs to search the for statement list for expressions and variable definitions
-				System.out.println("\t\tCalling dfs for exprs on for slist");
+//				System.out.println("\t\tCalling dfs for exprs on for slist");
 				dfs(forSlist, TokenTypes.EXPR, 3);
-				System.out.println("\t\tCalling dfs for var defs on for slist");
+//				System.out.println("\t\tCalling dfs for var defs on for slist");
 				dfs(forSlist, TokenTypes.VARIABLE_DEF, 3);
 				
 				// dfs will set checkWrite to true if the current localVariable is written to within the for loop
@@ -317,21 +326,28 @@ public class SingleForLoopCheck extends Check {
 				// TODO test against any variations of return statements - assumed tree looks like "LITERAL RETURN -> EXPR -> ________"
 				DetailAST returnStatement = a.findFirstToken(TokenTypes.LITERAL_RETURN);
 				
-				System.out.println("\t\tCalling dfs on exprs for return statement");
+//				System.out.println("\t\tCalling dfs on exprs for return statement");
 				dfs(returnStatement, TokenTypes.EXPR, 4);
+			
+				
+				
+				// NOTE: Removed the necessity of the variable read and written to be the same
+				
 				
 				// As soon as a local variable passes both checks - we have a suitable use of local variable for the method
-				if (checkWrite && checkRead)
+/*				if (checkWrite && checkRead)
 				{
-					System.out.println("\t\tLocal variable " +localVariable + " is written and read correclty");
+//					System.out.println("\t\tLocal variable " +localVariable + " is written and read correclty");
 					return true;
 				}
+				
+*/
 			}
 			slistChildren = slistChildren.getNextSibling();
 		}
 	
 		// Unable to find a local variable that satisfied the requirements of the check
-		return false;
+		return aLocalVariableUsed;
 	}	
 	
 	/**
