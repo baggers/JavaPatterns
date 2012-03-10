@@ -2,11 +2,13 @@
 # Script to analyse Checkstyle output for all students
 # Alex Bagini May, 2011
 
+# Update to include Std Dev Feb 2012
+
 #Summary file of checkstyle run
-SUMFILE=/home/alex/output-weather/total-summary.txt
+SUMFILE=/home/baggers/output-weather/total-summary.txt
 
 #Output summary file
-OUTFILE=/home/alex/Weather-Record-Summary.txt
+OUTFILE=/home/baggers/Weather-Record-Summary.txt
 if [ -f $OUTFILE ] ; then
 	rm $OUTFILE
 fi
@@ -16,45 +18,38 @@ echo "Summary - Single For Loop Summary" >> $OUTFILE
 echo "-----------------------------------------------------------------"	>> $OUTFILE
 echo >> $OUTFILE
 
-echo -n "Number of student submissions: " >> $OUTFILE		;					grep -c 'Audit done.' $SUMFILE >> $OUTFILE
+NUM=`grep -c 'Audit done.' $SUMFILE`
+echo -n "Number of student submissions: "$NUM >> $OUTFILE
 echo >> $OUTFILE
 echo >> $OUTFILE
-
-#Err_SFL_Fail 'minimum' incorrectly implements the Single For Loop pattern							DONE
-#Err_SFL_ForInit 'minimum' does not initiliase for loop init with 2nd element in 'observations'		DONE
-#Suc_SFL_For 'minimum' uses a for loop																DONE
-#Suc_SFL_ForCond 'minimum' uses length of 'observations' as looping condition						DONE
-#Suc_SFL_ForIf 'minimum' uses an if statement inside the for loop									TODO
-#Suc_SFL_LocalVar 'minimum' uses a local variable min for calculation of the minimum				DONE
-#Suc_SFL_Return 'minimum' returns the local variable minimum										DONE
 
 #MAXIMUM
 echo "_________________________________________________________________"	>> $OUTFILE
 echo "Maximum method summary" >>$OUTFILE
 
-echo -n $'\t'"Uses a for loop: " >>$OUTFILE ; 									grep -c "Suc_SFL_For 'maximum'" $SUMFILE >> $OUTFILE
-echo -n $'\t'"Does not use a for loop: " >>$OUTFILE ; 							grep -c "Err_SFL_For 'maximum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Uses a for loop: " >>$OUTFILE ; 						grep -c "Suc_SFL_For 'maximum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not use a for loop: " >>$OUTFILE ; 					grep -c "Err_SFL_For 'maximum'" $SUMFILE >> $OUTFILE
 
-echo -n $'\t'"Inits for loop with second element of array: " >>$OUTFILE ; 		grep -c "Suc_SFL_ForInit 'maximum'" $SUMFILE >> $OUTFILE
-echo -n $'\t'"Does not init with second element of array: " >>$OUTFILE ; 		grep -c "Err_SFL_ForInit 'maximum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Uses length of array as part of loop condition: " >>$OUTFILE ;		grep -c "Suc_SFL_ForCond 'maximum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not use length as part of loop condition: " >>$OUTFILE ; 		grep -c "Err_SFL_ForCond 'maximum'" $SUMFILE >> $OUTFILE
 
-echo -n $'\t'"Uses length of array as part of loop condition: " >>$OUTFILE ;	grep -c "Suc_SFL_ForCond 'maximum'" $SUMFILE >> $OUTFILE
-echo -n $'\t'"Does not use length as part of loop condition: " >>$OUTFILE ; 	grep -c "Err_SFL_ForCond 'maximum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Writes to a local variable within the for loop: " >>$OUTFILE ; 		grep -c "Suc_SFL_LocalVarWrite 'maximum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not write to a local variable within for loop: " >>$OUTFILE ;	grep -c "Err_SFL_LocalVarWrite 'maximum'" $SUMFILE >> $OUTFILE
 
-echo -n $'\t'"Uses local variable for storing current max: " >>$OUTFILE ; 		grep -c "Suc_SFL_LocalVar 'maximum'" $SUMFILE >> $OUTFILE
-echo -n $'\t'"Does not use local var for storing current max: " >>$OUTFILE ;	grep -c "Err_SFL_LocalVar 'maximum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Reads a local variable within return statement: " >>$OUTFILE ; 		grep -c "Suc_SFL_LocalVarRead 'maximum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not read a local variable within return statement: " >>$OUTFILE ;	grep -c "Err_SFL_LocalVarRead 'maximum'" $SUMFILE >> $OUTFILE
 
-echo -n $'\t'"Updates the local variable value inside the for loop: " >>$OUTFILE ; 	grep -c "Suc_SFL_ForLV 'maximum'" $SUMFILE >> $OUTFILE
-echo -n $'\t'"Does not update the local variable value in the for loop: " >>$OUTFILE ;	grep -c "Err_SFL_ForLV 'maximum'" $SUMFILE >> $OUTFILE
+echo >> $OUTFILE
 
-echo -n $'\t'"Returns the local variable max: " >>$OUTFILE ; 					grep -c "Suc_SFL_Return 'maximum'" $SUMFILE >> $OUTFILE
-echo -n $'\t'"Does not return the local var max: " >>$OUTFILE ;					grep -c "Err_SFL_Return 'maximum'" $SUMFILE >> $OUTFILE
-
-#if statement
+echo -n $'\t'"No immediate local variable defined within the method: " >>$OUTFILE ; 	grep -c "Err_SFL_LocalVar 'maximum'" $SUMFILE >> $OUTFILE
 
 echo "_________________________________________________________________"	>> $OUTFILE
-echo -n "Total Complete Passes: " >>$OUTFILE ;									grep -c "Complete_Pass 'maximum'" $SUMFILE >> $OUTFILE
-echo -n "Total Incomplete Passes: " >>$OUTFILE ;								grep -c "Incomplete_Pass 'maximum'" $SUMFILE >> $OUTFILE
+#echo -n "Total Complete Passes: " >>$OUTFILE ;						grep -c "Complete_Pass 'maximum'" $SUMFILE >> $OUTFILE
+#echo -n "Total Incomplete Passes: " >>$OUTFILE ;					grep -c "Incomplete_Pass 'maximum'" $SUMFILE >> $OUTFILE
+
+PASS=`grep -c "Complete_Pass 'maximum'" $SUMFILE`
+FAIL=`grep -c "Incomplete_Pass 'maximum'" $SUMFILE`
+echo -e "Total Complete Passes: $PASS\nTotal Incomplete Passes: $FAIL" >> $OUTFILE
 
 echo >> $OUTFILE
 echo >> $OUTFILE
@@ -63,34 +58,91 @@ echo >> $OUTFILE
 echo "_________________________________________________________________"	>> $OUTFILE
 echo "Minimum method summary" >>$OUTFILE
 
-echo -n $'\t'"Uses a for loop: " >>$OUTFILE ; 									grep -c "Suc_SFL_For 'minimum'" $SUMFILE >> $OUTFILE
-echo -n $'\t'"Does not use a for loop: " >>$OUTFILE ; 							grep -c "Err_SFL_For 'minimum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Uses a for loop: " >>$OUTFILE ; 						grep -c "Suc_SFL_For 'minimum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not use a for loop: " >>$OUTFILE ; 					grep -c "Err_SFL_For 'minimum'" $SUMFILE >> $OUTFILE
 
-echo -n $'\t'"Inits for loop with second element of array: " >>$OUTFILE ; 		grep -c "Suc_SFL_ForInit 'minimum'" $SUMFILE >> $OUTFILE
-echo -n $'\t'"Does not init with second element of array: " >>$OUTFILE ; 		grep -c "Err_SFL_ForInit 'minimum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Uses length of array as part of loop condition: " >>$OUTFILE ;		grep -c "Suc_SFL_ForCond 'minimum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not use length as part of loop condition: " >>$OUTFILE ; 		grep -c "Err_SFL_ForCond 'minimum'" $SUMFILE >> $OUTFILE
 
-echo -n $'\t'"Uses length of array as part of loop condition: " >>$OUTFILE ;	grep -c "Suc_SFL_ForCond 'minimum'" $SUMFILE >> $OUTFILE
-echo -n $'\t'"Does not use length as part of loop condition: " >>$OUTFILE ; 	grep -c "Err_SFL_ForCond 'minimum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Writes to a local variable within the for loop: " >>$OUTFILE ; 		grep -c "Suc_SFL_LocalVarWrite 'minimum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not write to a local variable within for loop: " >>$OUTFILE ;	grep -c "Err_SFL_LocalVarWrite 'minimum'" $SUMFILE >> $OUTFILE
 
-echo -n $'\t'"Uses local variable for storing current min: " >>$OUTFILE ; 		grep -c "Suc_SFL_LocalVar 'minimum'" $SUMFILE >> $OUTFILE
-echo -n $'\t'"Does not use local var for storing current min: " >>$OUTFILE ;	grep -c "Err_SFL_LocalVar 'minimum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Reads a local variable within return statement: " >>$OUTFILE ; 		grep -c "Suc_SFL_LocalVarRead 'minimum'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not read a local variable within return statement: " >>$OUTFILE ;	grep -c "Err_SFL_LocalVarRead 'minimum'" $SUMFILE >> $OUTFILE
 
-echo -n $'\t'"Updates the local variable value inside the for loop: " >>$OUTFILE ; 	grep -c "Suc_SFL_ForLV 'minimum'" $SUMFILE >> $OUTFILE
-echo -n $'\t'"Does not update the local variable value in the for loop: " >>$OUTFILE ;	grep -c "Err_SFL_ForLV 'minimum'" $SUMFILE >> $OUTFILE
+echo >> $OUTFILE
 
-echo -n $'\t'"Returns the local variable min: " >>$OUTFILE ; 					grep -c "Suc_SFL_Return 'minimum'" $SUMFILE >> $OUTFILE
-echo -n $'\t'"Does not return the local var min: " >>$OUTFILE ;					grep -c "Err_SFL_Return 'minimum'" $SUMFILE >> $OUTFILE
-
-#if statement
+echo -n $'\t'"No immediate local variable defined within the method: " >>$OUTFILE ; 	grep -c "Err_SFL_LocalVar 'minimum'" $SUMFILE >> $OUTFILE
 echo "_________________________________________________________________"	>> $OUTFILE
-echo -n "Total Complete Passes: " >>$OUTFILE ;									grep -c "Complete_Pass 'minimum'" $SUMFILE >> $OUTFILE
-echo -n "Total Incomplete Passes: " >>$OUTFILE ;								grep -c "Incomplete_Pass 'minimum'" $SUMFILE >> $OUTFILE
+#echo -n "Total Complete Passes: " >>$OUTFILE ;						grep -c "Complete_Pass 'minimum'" $SUMFILE >> $OUTFILE
+#echo -n "Total Incomplete Passes: " >>$OUTFILE ;					grep -c "Incomplete_Pass 'minimum'" $SUMFILE >> $OUTFILE
 
+PASS=`grep -c "Complete_Pass 'minimum'" $SUMFILE`
+FAIL=`grep -c "Incomplete_Pass 'minimum'" $SUMFILE`
+echo -e "Total Complete Passes: $PASS\nTotal Incomplete Passes: $FAIL" >> $OUTFILE
+
+echo >> $OUTFILE
+echo >> $OUTFILE
+
+#STDDEV
+echo "_________________________________________________________________"	>> $OUTFILE
+echo "Standard Deviation method summary" >>$OUTFILE
+
+echo -n $'\t'"Uses a for loop: " >>$OUTFILE ; 						grep -c "Suc_SFL_For 'stddeviation'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not use a for loop: " >>$OUTFILE ; 					grep -c "Err_SFL_For 'stddeviation'" $SUMFILE >> $OUTFILE
+
+echo -n $'\t'"Uses length of array as part of loop condition: " >>$OUTFILE ;		grep -c "Suc_SFL_ForCond 'stddeviation'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not use length as part of loop condition: " >>$OUTFILE ; 		grep -c "Err_SFL_ForCond 'stddeviation'" $SUMFILE >> $OUTFILE
+
+echo -n $'\t'"Writes to a local variable within the for loop: " >>$OUTFILE ; 		grep -c "Suc_SFL_LocalVarWrite 'stddeviation'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not write to a local variable within for loop: " >>$OUTFILE ;	grep -c "Err_SFL_LocalVarWrite 'stddeviation'" $SUMFILE >> $OUTFILE
+
+echo -n $'\t'"Reads a local variable within return statement: " >>$OUTFILE ; 		grep -c "Suc_SFL_LocalVarRead 'stddeviation'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not read a local variable within return statement: " >>$OUTFILE ;	grep -c "Err_SFL_LocalVarRead 'stddeviation'" $SUMFILE >> $OUTFILE
+
+echo >> $OUTFILE
+
+echo -n $'\t'"No immediate local variable defined within the method: " >>$OUTFILE ; 	grep -c "Err_SFL_LocalVar 'stddeviation'" $SUMFILE >> $OUTFILE
+echo "_________________________________________________________________"	>> $OUTFILE
+#echo -n "Total Complete Passes: " >>$OUTFILE ;						grep -c "Complete_Pass 'stddeviation'" $SUMFILE >> $OUTFILE
+#echo -n "Total Incomplete Passes: " >>$OUTFILE ;					grep -c "Incomplete_Pass 'stddeviation'" $SUMFILE >> $OUTFILE
+
+PASS=`grep -c "Complete_Pass 'stddeviation'" $SUMFILE`
+FAIL=`grep -c "Incomplete_Pass 'stddeviation'" $SUMFILE`
+echo -e "Total Complete Passes: $PASS\nTotal Incomplete Passes: $FAIL" >> $OUTFILE
+
+echo >> $OUTFILE
+echo >> $OUTFILE
+
+#AVERAGE
+echo "_________________________________________________________________"	>> $OUTFILE
+echo "Average method summary" >>$OUTFILE
+
+echo -n $'\t'"Uses a for loop: " >>$OUTFILE ; 						grep -c "Suc_SFL_For 'average'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not use a for loop: " >>$OUTFILE ; 					grep -c "Err_SFL_For 'average'" $SUMFILE >> $OUTFILE
+
+echo -n $'\t'"Uses length of array as part of loop condition: " >>$OUTFILE ;		grep -c "Suc_SFL_ForCond 'average'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not use length as part of loop condition: " >>$OUTFILE ; 		grep -c "Err_SFL_ForCond 'average'" $SUMFILE >> $OUTFILE
+
+echo -n $'\t'"Writes to a local variable within the for loop: " >>$OUTFILE ; 		grep -c "Suc_SFL_LocalVarWrite 'average'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not write to a local variable within for loop: " >>$OUTFILE ;	grep -c "Err_SFL_LocalVarWrite 'average'" $SUMFILE >> $OUTFILE
+
+echo -n $'\t'"Reads a local variable within return statement: " >>$OUTFILE ; 		grep -c "Suc_SFL_LocalVarRead 'average'" $SUMFILE >> $OUTFILE
+echo -n $'\t'"Does not read a local variable within return statement: " >>$OUTFILE ;	grep -c "Err_SFL_LocalVarRead 'average'" $SUMFILE >> $OUTFILE
+
+echo >> $OUTFILE
+
+echo -n $'\t'"No immediate local variable defined within the method: " >>$OUTFILE ; 	grep -c "Err_SFL_LocalVar 'average'" $SUMFILE >> $OUTFILE
+echo "_________________________________________________________________"	>> $OUTFILE
+
+PASS=`grep -c "Complete_Pass 'average'" $SUMFILE`
+FAIL=`grep -c "Incomplete_Pass 'average'" $SUMFILE`
+echo -e "Total Complete Passes: $PASS\nTotal Incomplete Passes: $FAIL" >> $OUTFILE						
 
 echo >> $OUTFILE
 echo >> $OUTFILE
 
 #EXCEPTION THROWN
-echo -n "Student code that caused exception when run: " >> $OUTFILE	;			grep -c "Got an exception" $SUMFILE >> $OUTFILE
+echo -n "Student code that caused exception when run: " >> $OUTFILE	;		grep -c "Got an exception" $SUMFILE >> $OUTFILE
 echo >> $OUTFILE
 

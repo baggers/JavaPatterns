@@ -5,23 +5,36 @@
 
 # Alex Bagini, May 2011
 
-#Location of student submissions
-SUBDIR=/home/alex/student-code/WeatherRecord/submissions
-#Location of bash scripts
-SCRIPTDIR=/home/alex/Dropbox/Uni-2011/Honours/dev/scripts/weather
-#Location of output folder
-OUTDIR=/home/alex/output-weather
+# Update to include Std Dev Feb 2012.
 
-MATRIX=/home/alex/Weather-Matrix.txt
+#Location of student submissions
+SUBDIR=~/WeatherRecordArchive/submissions
+#Location of bash scripts
+SCRIPTDIR=~/JavaPatterns/dev/scripts/weather
+#Location of output folder
+OUTDIR=/home/baggers/output-weather
+
+MATRIX=/home/baggers/Weather-Matrix-MaxMin.txt
+MATRIX2=/home/baggers/Weather-Matrix-SDAvg.txt
 
 #Matrix file preamble
 if [ -f $MATRIX ] ; then
 	rm $MATRIX
 fi
 
-echo -e "           \t |Maximum\t         \t          \t           \t\t\t\t\t\t\t\t\t\t\t\t|Minimum" >> $MATRIX
-echo -e "StuID \t\t |Pass \t SFL_For \t SFL_ForInit \t SFL_ForCond \t SFL_LocalVar \t SFL_ForLV \t SFL_Return \t|Pass \t SFL_For \t SFL_ForInit \t SFL_ForCond \t SFL_LocalVar \t SFL_ForLV \t SFL_Return" >> $MATRIX
+echo -e "           \t |Maximum\t         \t          \t\t\t\t\t\t|Minimum" >> $MATRIX
+echo -e "StuID \t\t |Pass \t SFL_For \t SFL_ForCond \t SFL_LocalVarRead \t SFL_LocalVarWrite \t|Pass \t SFL_For \t SFL_ForCond \t SFL_LocalVarRead \t SFL_LocalVarWrite" >> $MATRIX
 echo 	"----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" >> $MATRIX
+
+
+#Matrix file preamble
+if [ -f $MATRIX2 ] ; then
+	rm $MATRIX2
+fi
+
+echo -e "           \t |Std Dev \t	\t	\t\t\t\t\t\t|Average" >> $MATRIX2
+echo -e "StuID \t\t |Pass \t SFL_For \t SFL_ForCond \t SFL_LocalVarRead \t SFL_LocalVarWrite \t|Pass \t SFL_For \t SFL_ForCond \t SFL_LocalVarRead \t SFL_LocalVarWrite " >> $MATRIX2
+echo 	"----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" >> $MATRIX2
 
 if [ -d $OUTDIR ] ; then
 	echo "Removing previous output directory"

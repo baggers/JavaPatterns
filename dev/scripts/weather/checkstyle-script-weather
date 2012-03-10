@@ -4,6 +4,8 @@
 
 # Alex Bagini May, 2011
 
+# Update to include Std Dev method Feb 2012
+
 # Student folder
 STU=$1    ; shift
 
@@ -11,20 +13,20 @@ STU=$1    ; shift
 # Variables
 
 #Location of required files - jars and xml
-TESTDIR=/home/alex/Dropbox/Uni-2011/Honours/dev/src-test
+TESTDIR=~/JavaPatterns/dev/src-test
 #Location of the student code
-SUBDIR=/home/alex/student-code/WeatherRecord
+SUBDIR=~/WeatherRecordArchive
 #Location of the output for individual summaries
-OUTDIR=/home/alex/output-weather
+OUTDIR=/home/baggers/output-weather
 
 PROG=WeatherRecord
 
 #Location of configuration XML file
 CHECKXML=$TESTDIR/forcheck
 #Location of checkstyle jar
-CHECKSTYLE=$TESTDIR/checkstyle-5.3-all.jar
+CHECKSTYLE=$TESTDIR/checkstyle-5.5-all.jar
 #Location of custom rules jar
-CUSTOMRULES=$TESTDIR/update.jar
+CUSTOMRULES=$TESTDIR/new.jar
 
 #Check student dir exists
 STUDIR=$SUBDIR/submissions/$STU
@@ -49,7 +51,8 @@ FEEDBACK=$OUTDIR/$STU/Feedback.txt
 SUMMARY=$OUTDIR/total-summary.txt
 FAILLIST=$OUTDIR/fail-list.txt
 EXCLIST=$OUTDIR/exc-list.txt
-MATRIX=/home/alex/Weather-Matrix.txt
+MATRIX=/home/baggers/Weather-Matrix-MaxMin.txt
+MATRIX2=/home/baggers/Weather-Matrix-SDAvg.txt
 
 echo "Marking $PROG for $STU at $(date +%Y-%m-%d" "%H:%M)" > $FEEDBACK #start a new feedback file
 
@@ -91,118 +94,179 @@ echo "Checkstyle test complete." >> $FEEDBACK
 
 #Add check results to matrix
 
-
-#Maximum
-FM=`grep -c "Suc_SFL_For 'maximum'" $FEEDBACK`
-FIM=`grep -c "Suc_SFL_ForInit 'maximum'" $FEEDBACK`
-FCM=`grep -c "Suc_SFL_ForCond 'maximum'" $FEEDBACK`
-LVM=`grep -c "Suc_SFL_LocalVar 'maximum'" $FEEDBACK`
-FLV=`grep -c "Suc_SFL_ForLV 'maximum'" $FEEDBACK`
-RM=`grep -c "Suc_SFL_Return 'maximum'" $FEEDBACK`
-PM=`grep -c "Complete_Pass 'maximum'" $FEEDBACK`
-
+#PREAMBLE
 echo -n $STU >>$MATRIX
+echo -n $STU >>$MATRIX2
 
 LEN=`expr length "$STU"`
 
 #extra tab for short names to align correctly
-if [ $LEN -lt 8 ] ; then
+if [ $LEN -lt 9 ] ; then
 	echo -ne "\t" >>$MATRIX
+	echo -ne "\t" >>$MATRIX2
 fi
 
+#extra tab for extra short names
+if [ $LEN -lt 8 ] ; then
+	echo -ne "\t" >>$MATRIX
+	echo -ne "\t" >>$MATRIX2
+fi
+
+
+#Maximum (M)
+FM=`grep -c "Suc_SFL_For 'maximum'" $FEEDBACK`
+FCM=`grep -c "Suc_SFL_ForCond 'maximum'" $FEEDBACK`
+LVRM=`grep -c "Suc_SFL_LocalVarRead 'maximum'" $FEEDBACK`
+LVWM=`grep -c "Suc_SFL_LocalVarWrite 'maximum'" $FEEDBACK`
+PM=`grep -c "Complete_Pass 'maximum'" $FEEDBACK`
+
 if [ $PM -gt 0 ] ; then
-	echo -ne "\t |Y" >> $MATRIX
+	echo -ne " |Y" >> $MATRIX
 else
-	echo -ne "\t |N" >> $MATRIX
+	echo -ne " |N" >> $MATRIX
 fi
 
 if [ $FM -gt 0 ] ; then
+	echo -ne "\t Y" >> $MATRIX
+else
+	echo -ne "\t N" >> $MATRIX
+fi
+
+if [ $FCM -gt 0 ] ; then
 	echo -ne "\t\t Y" >> $MATRIX
 else
 	echo -ne "\t\t N" >> $MATRIX
 fi
 
-if [ $FIM -gt 0 ] ; then
+if [ $LVRM -gt 0 ] ; then
+	echo -ne "\t\t Y" >> $MATRIX
+else
+	echo -ne "\t\t N" >> $MATRIX
+fi
+
+if [ $LVWM -gt 0 ] ; then
 	echo -ne "\t\t\t Y" >> $MATRIX
 else
 	echo -ne "\t\t\t N" >> $MATRIX
 fi
 
-if [ $FCM -gt 0 ] ; then
-	echo -ne "\t\t\t\t Y" >> $MATRIX
-else
-	echo -ne "\t\t\t\t N" >> $MATRIX
-fi
 
-if [ $LVM -gt 0 ] ; then
-	echo -ne "\t\t\t\t Y" >> $MATRIX
-else
-	echo -ne "\t\t\t\t N" >> $MATRIX
-fi
-
-if [ $FLV -gt 0 ] ; then
-	echo -ne "\t\t\t\t Y" >> $MATRIX
-else
-	echo -ne "\t\t\t\t N" >> $MATRIX
-fi
-
-if [ $RM -gt 0 ] ; then
-	echo -ne "\t\t\t\t Y" >> $MATRIX
-else
-	echo -ne "\t\t\t\t N" >> $MATRIX
-fi
-
-#Minimum
+#Minimum (Mi)
 FMi=`grep -c "Suc_SFL_For 'minimum'" $FEEDBACK`
-FIMi=`grep -c "Suc_SFL_ForInit 'minimum'" $FEEDBACK`
 FCMi=`grep -c "Suc_SFL_ForCond 'minimum'" $FEEDBACK`
-LVMi=`grep -c "Suc_SFL_LocalVar 'minimum'" $FEEDBACK`
-FLVi=`grep -c "Suc_SFL_ForLV 'minimum'" $FEEDBACK`
-RMi=`grep -c "Suc_SFL_Return 'minimum'" $FEEDBACK`
+LVRMi=`grep -c "Suc_SFL_LocalVarRead 'minimum'" $FEEDBACK`
+LVWMi=`grep -c "Suc_SFL_LocalVarWrite 'minimum'" $FEEDBACK`
 PMi=`grep -c "Complete_Pass 'minimum'" $FEEDBACK`
 
 
 if [ $PMi -gt 0 ] ; then
-	echo -ne "\t\t\t\t|Y" >> $MATRIX
+	echo -ne "\t\t\t|Y" >> $MATRIX
 else
-	echo -ne "\t\t\t\t|N" >> $MATRIX
+	echo -ne "\t\t\t|N" >> $MATRIX
 fi
 
 
 if [ $FMi -gt 0 ] ; then
+	echo -ne "\t Y" >> $MATRIX
+else
+	echo -ne "\t N" >> $MATRIX
+fi
+
+if [ $FCMi -gt 0 ] ; then
 	echo -ne "\t\t Y" >> $MATRIX
 else
 	echo -ne "\t\t N" >> $MATRIX
 fi
 
-if [ $FIMi -gt 0 ] ; then
-	echo -ne "\t\t\t Y" >> $MATRIX
+if [ $LVRMi -gt 0 ] ; then
+	echo -ne "\t\t Y" >> $MATRIX
 else
-	echo -ne "\t\t\t N" >> $MATRIX
+	echo -ne "\t\t N" >> $MATRIX
 fi
 
-if [ $FCMi -gt 0 ] ; then
-	echo -ne "\t\t\t\t Y" >> $MATRIX
+if [ $LVWMi -gt 0 ] ; then
+	echo -e "\t\t\t Y" >> $MATRIX
 else
-	echo -ne "\t\t\t\t N" >> $MATRIX
+	echo -e "\t\t\t N" >> $MATRIX
 fi
 
-if [ $LVMi -gt 0 ] ; then
-	echo -ne "\t\t\t\t Y" >> $MATRIX
+
+#Std Dev (SD)
+FSD=`grep -c "Suc_SFL_For 'stddeviation'" $FEEDBACK`
+FCSD=`grep -c "Suc_SFL_ForCond 'stddeviation'" $FEEDBACK`
+LVRSD=`grep -c "Suc_SFL_LocalVarRead 'stddeviation'" $FEEDBACK`
+LVWSD=`grep -c "Suc_SFL_LocalVarWrite 'stddeviation'" $FEEDBACK`
+PSD=`grep -c "Complete_Pass 'stddeviation'" $FEEDBACK`
+
+
+if [ $PSD -gt 0 ] ; then
+	echo -ne " |Y" >> $MATRIX2
 else
-	echo -ne "\t\t\t\t N" >> $MATRIX
+	echo -ne " |N" >> $MATRIX2
 fi
 
-if [ $FLVi -gt 0 ] ; then
-	echo -ne "\t\t\t\t Y" >> $MATRIX
+
+if [ $FSD -gt 0 ] ; then
+	echo -ne "\t Y" >> $MATRIX2
 else
-	echo -ne "\t\t\t\t N" >> $MATRIX
+	echo -ne "\t N" >> $MATRIX2
 fi
 
-if [ $RMi -gt 0 ] ; then
-	echo -e "\t\t\t\t Y" >> $MATRIX
+if [ $FCSD -gt 0 ] ; then
+	echo -ne "\t\t Y" >> $MATRIX2
 else
-	echo -e "\t\t\t\t N" >> $MATRIX
+	echo -ne "\t\t N" >> $MATRIX2
+fi
+
+if [ $LVRSD -gt 0 ] ; then
+	echo -ne "\t\t Y" >> $MATRIX2
+else
+	echo -ne "\t\t N" >> $MATRIX2
+fi
+
+if [ $LVWSD -gt 0 ] ; then
+	echo -ne "\t\t\t Y" >> $MATRIX2
+else
+	echo -ne "\t\t\t N" >> $MATRIX2
+fi
+
+#Average(A)
+FA=`grep -c "Suc_SFL_For 'average'" $FEEDBACK`
+FCA=`grep -c "Suc_SFL_ForCond 'average'" $FEEDBACK`
+LVRA=`grep -c "Suc_SFL_LocalVarRead 'average'" $FEEDBACK`
+LVWA=`grep -c "Suc_SFL_LocalVarWrite 'average'" $FEEDBACK`
+PA=`grep -c "Complete_Pass 'average'" $FEEDBACK`
+
+
+if [ $PA -gt 0 ] ; then
+	echo -ne "\t\t\t|Y" >> $MATRIX2
+else
+	echo -ne "\t\t\t|N" >> $MATRIX2
+fi
+
+
+if [ $FA -gt 0 ] ; then
+	echo -ne "\t Y" >> $MATRIX2
+else
+	echo -ne "\t N" >> $MATRIX2
+fi
+
+if [ $FCA -gt 0 ] ; then
+	echo -ne "\t\t Y" >> $MATRIX2
+else
+	echo -ne "\t\t N" >> $MATRIX2
+fi
+
+if [ $LVRA -gt 0 ] ; then
+	echo -ne "\t\t Y" >> $MATRIX2
+else
+	echo -ne "\t\t N" >> $MATRIX2
+fi
+
+if [ $LVWA -gt 0 ] ; then
+	echo -e "\t\t\t Y" >> $MATRIX2
+else
+	echo -e "\t\t\t N" >> $MATRIX2
 fi
 
 

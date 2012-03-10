@@ -12,11 +12,14 @@ class forlooptest
 	public int maximum(int[] a)
 	{
 		int sum = 0;
+		int b = 1;
 		for (int i = 0; i < 2; i++)
 		{
-			sum += a[i];
+			//sum += a[i];
+			//sum = b + 3;
+			b = 3 + i;
 		}
-		return sum;
+		return 10+3/2*11 + Math.pow(2, 3);
 
 	}
 

@@ -7,7 +7,7 @@
 
 	<!-- Check the sumloop method -->
 	<module name="checks.SingleForLoopCheck">
-		<property name="methodName" value="maximum, minimum, average, stddeviation"/>
+		<property name="methodName" value="average"/>
 		<property name="arrayName" value="observations"/>
 		<property name="reportStyle" value="1"/>
 	</module>
